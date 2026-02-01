@@ -4,11 +4,21 @@ from __future__ import annotations
 import json
 import re
 import uuid
+from collections.abc import AsyncIterator
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, AsyncIterator, Protocol, runtime_checkable
 from logging import getLogger
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+from src.channels.horror.prompts import (
+    DESCRIPTION_TEMPLATE,
+    FORBIDDEN_TOPICS,
+    SCRIPT_TEMPLATE,
+    TAGS_GENERATION,
+    TITLE_OPTIMIZATION,
+    TOPIC_GENERATION,
+    VISUAL_PROMPT_TEMPLATE,
+)
 from src.core.exceptions import PipelineError
 from src.core.interfaces import ContentPipeline
 from src.core.models import (
@@ -17,25 +27,15 @@ from src.core.models import (
     Script,
     VideoProject,
 )
-from src.channels.horror.prompts import (
-    FORBIDDEN_TOPICS,
-    TOPIC_GENERATION,
-    SCRIPT_TEMPLATE,
-    VISUAL_PROMPT_TEMPLATE,
-    THUMBNAIL_PROMPT_TEMPLATE,
-    TITLE_OPTIMIZATION,
-    DESCRIPTION_TEMPLATE,
-    TAGS_GENERATION,
-)
 
 if TYPE_CHECKING:
     from src.core.interfaces import (
-        ScriptGenerator,
-        TTSEngine,
         ImageGenerator,
-        VideoGenerator,
-        VideoComposer,
+        ScriptGenerator,
         ThumbnailGenerator,
+        TTSEngine,
+        VideoComposer,
+        VideoGenerator,
         YouTubeUploader,
     )
 
@@ -293,7 +293,7 @@ class HorrorPipeline(ContentPipeline):
     ) -> Path:
         video_file = output_path / "final.mp4"
         bg_music = self._cfg("background_music_path", None)
-        bg_music_path = Path(bg_music) if bg_music else None
+        Path(bg_music) if bg_music else None
 
         composer = self.video_composer
         if hasattr(composer, "compose"):

@@ -1,14 +1,14 @@
 from src.services.thumbnail.generator import ThumbnailGenerator
 from src.services.thumbnail.styles import (
-    ThumbnailStyle,
-    TextStyle,
-    TextPosition,
-    HORROR_STYLES,
+    CHANNEL_STYLES,
     FACTS_STYLES,
     FINANCE_STYLES,
-    CHANNEL_STYLES,
-    get_styles_for_channel,
+    HORROR_STYLES,
+    TextPosition,
+    TextStyle,
+    ThumbnailStyle,
     get_style_by_name,
+    get_styles_for_channel,
 )
 
 __all__ = [

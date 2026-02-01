@@ -6,14 +6,14 @@ from typing import TYPE_CHECKING
 
 from src.channels.facts.pipeline import FactsPipeline
 from src.channels.facts.prompts import (
+    DESCRIPTION_TEMPLATE,
     FORBIDDEN_TOPICS,
-    TOPIC_GENERATION,
     SCRIPT_TEMPLATE,
-    VISUAL_PROMPT_TEMPLATE,
+    TAGS_GENERATION,
     THUMBNAIL_PROMPT_TEMPLATE,
     TITLE_OPTIMIZATION,
-    DESCRIPTION_TEMPLATE,
-    TAGS_GENERATION,
+    TOPIC_GENERATION,
+    VISUAL_PROMPT_TEMPLATE,
 )
 
 if TYPE_CHECKING:
@@ -22,14 +22,14 @@ if TYPE_CHECKING:
 
 def create_pipeline(output_base: Path | None = None) -> FactsPipeline:
     from src.services import (
-        get_script_generator,
-        TTSEngineImpl,
         ImageGenerator,
-        VideoGenerator,
-        VideoComposer,
         ThumbnailGenerator,
+        TTSEngineImpl,
+        VideoComposer,
+        VideoGenerator,
         YouTubeUploader,
         get_llm_client,
+        get_script_generator,
     )
 
     return FactsPipeline(

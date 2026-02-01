@@ -1,6 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from src.core.models import ChannelType
 
@@ -34,7 +33,7 @@ class ThumbnailStyle:
     prompt_template: str
     negative_prompt: str
     text_style: TextStyle
-    overlay_color: Optional[str] = None
+    overlay_color: str | None = None
     overlay_opacity: float = 0.0
     vignette: bool = False
     saturation_boost: float = 1.0
@@ -192,7 +191,7 @@ def get_styles_for_channel(channel: ChannelType) -> list[ThumbnailStyle]:
     return CHANNEL_STYLES.get(channel, FACTS_STYLES)
 
 
-def get_style_by_name(channel: ChannelType, style_name: str) -> Optional[ThumbnailStyle]:
+def get_style_by_name(channel: ChannelType, style_name: str) -> ThumbnailStyle | None:
     styles = get_styles_for_channel(channel)
     for style in styles:
         if style.name == style_name:

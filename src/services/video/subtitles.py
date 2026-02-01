@@ -1,10 +1,10 @@
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Optional, Any, TYPE_CHECKING
 import re
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from src.core.models import Script
+    pass
 
 
 @dataclass
@@ -212,7 +212,7 @@ class SubtitleStyle:
     }
 
     @classmethod
-    def to_ffmpeg_filter(cls, style: Optional[dict] = None) -> str:
+    def to_ffmpeg_filter(cls, style: dict | None = None) -> str:
         s = {**cls.DEFAULT, **(style or {})}
         return (
             f"subtitles=filename='{{srt_path}}':force_style='"
@@ -227,7 +227,7 @@ class SubtitleStyle:
         )
 
     @classmethod
-    def get_ffmpeg_args(cls, srt_path: Path, style: Optional[dict] = None) -> str:
+    def get_ffmpeg_args(cls, srt_path: Path, style: dict | None = None) -> str:
         s = {**cls.DEFAULT, **(style or {})}
         srt_escaped = str(srt_path).replace(":", "\\:").replace("'", "\\'")
         return (

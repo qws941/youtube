@@ -10,13 +10,12 @@ from pathlib import Path
 from typing import Any, Literal
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from config import get_settings
-from src.core.interfaces import VideoGenerator as VideoGeneratorABC
-from src.core.models import VisualAsset, ChannelType
 from src.core.exceptions import VideoGenerationError
-
+from src.core.interfaces import VideoGenerator as VideoGeneratorABC
+from src.core.models import ChannelType, VisualAsset
 
 KenBurnsEffect = Literal["zoom_in", "zoom_out", "pan_left", "pan_right", "pan_up", "pan_down"]
 
@@ -245,7 +244,7 @@ class VideoGenerator(VideoGeneratorABC):
             motion_prompts = motion_prompts * len(image_paths)
 
         tasks = []
-        for i, (img_path, prompt) in enumerate(zip(image_paths, motion_prompts)):
+        for i, (img_path, prompt) in enumerate(zip(image_paths, motion_prompts, strict=False)):
             output_path = output_dir / f"video_{i:04d}.mp4"
             tasks.append(
                 self.generate_from_image(img_path, prompt, duration, output_path, **kwargs)

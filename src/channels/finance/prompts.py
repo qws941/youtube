@@ -193,8 +193,8 @@ Output as comma-separated list."""
 
 DISCLAIMER_TEXT = """
 ---
-DISCLAIMER: This content is for educational and informational purposes only. 
-It should not be considered as financial, investment, tax, or legal advice. 
+DISCLAIMER: This content is for educational and informational purposes only.
+It should not be considered as financial, investment, tax, or legal advice.
 Always consult with qualified professionals before making any financial decisions.
 Past performance does not guarantee future results. All investments carry risk.
 ---

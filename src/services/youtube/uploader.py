@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-import time
-import random
 import asyncio
-from pathlib import Path
-from datetime import datetime, timezone
-from typing import Optional, Any
+import random
+import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
 
-from googleapiclient.http import MediaFileUpload  # type: ignore[import-untyped]
 from googleapiclient.errors import HttpError, ResumableUploadError  # type: ignore[import-untyped]
+from googleapiclient.http import MediaFileUpload  # type: ignore[import-untyped]
 
-from src.core.interfaces import YouTubeUploader as YouTubeUploaderBase
 from src.core.exceptions import (
     YouTubeAPIError,
     YouTubeQuotaExceededError,
     YouTubeUploadError,
 )
+from src.core.interfaces import YouTubeUploader as YouTubeUploaderBase
 from src.services.youtube.auth import YouTubeAuth
 
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
@@ -28,7 +28,7 @@ _executor = ThreadPoolExecutor(max_workers=2)
 
 
 class YouTubeUploader(YouTubeUploaderBase):
-    def __init__(self, auth: Optional[YouTubeAuth] = None) -> None:
+    def __init__(self, auth: YouTubeAuth | None = None) -> None:
         self._auth = auth or YouTubeAuth()
 
     @property
@@ -45,8 +45,8 @@ class YouTubeUploader(YouTubeUploaderBase):
         title: str,
         description: str,
         tags: list[str],
-        thumbnail_path: Optional[str | Path] = None,
-        scheduled_at: Optional[str] = None,
+        thumbnail_path: str | Path | None = None,
+        scheduled_at: str | None = None,
         category_id: str = "22",
         privacy_status: str = "private",
         made_for_kids: bool = False,
@@ -103,7 +103,7 @@ class YouTubeUploader(YouTubeUploaderBase):
 
     def _resumable_upload(self, request: Any) -> str:
         response = None
-        error: Optional[Exception] = None
+        error: Exception | None = None
         retry = 0
 
         while response is None:
@@ -132,7 +132,7 @@ class YouTubeUploader(YouTubeUploaderBase):
     def _format_scheduled_time(self, scheduled_at: str) -> str:
         dt = datetime.fromisoformat(scheduled_at.replace("Z", "+00:00"))
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
         return dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
     async def update_thumbnail(self, video_id: str, thumbnail_path: str | Path) -> bool:
@@ -165,7 +165,7 @@ class YouTubeUploader(YouTubeUploaderBase):
     async def get_analytics(
         self,
         video_id: str,
-        metrics: Optional[list[str]] = None,
+        metrics: list[str] | None = None,
     ) -> dict[str, Any]:
         if metrics is None:
             metrics = [
@@ -190,7 +190,7 @@ class YouTubeUploader(YouTubeUploaderBase):
                 return {"video_id": video_id, "error": "No channel found"}
 
             channel_id = channel_response["items"][0]["id"]
-            end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            end_date = datetime.now(UTC).strftime("%Y-%m-%d")
             start_date = "2020-01-01"
 
             response = self.analytics.reports().query(
@@ -205,7 +205,7 @@ class YouTubeUploader(YouTubeUploaderBase):
             if response.get("rows") and response.get("columnHeaders"):
                 headers = [h["name"] for h in response["columnHeaders"]]
                 values = response["rows"][0]
-                for header, value in zip(headers, values):
+                for header, value in zip(headers, values, strict=False):
                     result[header] = value
 
             return result
@@ -251,10 +251,10 @@ class YouTubeUploader(YouTubeUploaderBase):
     async def update_video(
         self,
         video_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        category_id: Optional[str] = None,
+        title: str | None = None,
+        description: str | None = None,
+        tags: list[str] | None = None,
+        category_id: str | None = None,
     ) -> bool:
         loop = asyncio.get_event_loop()
         result: bool = await loop.run_in_executor(
@@ -271,10 +271,10 @@ class YouTubeUploader(YouTubeUploaderBase):
     def _sync_update_video(
         self,
         video_id: str,
-        title: Optional[str],
-        description: Optional[str],
-        tags: Optional[list[str]],
-        category_id: Optional[str],
+        title: str | None,
+        description: str | None,
+        tags: list[str] | None,
+        category_id: str | None,
     ) -> bool:
         try:
             current = self.youtube.videos().list(

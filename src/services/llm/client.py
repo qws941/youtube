@@ -1,21 +1,20 @@
+import json
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
-import json
-import time
 
 from anthropic import AsyncAnthropic
 from openai import AsyncOpenAI
 from tenacity import (
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
 
 from config import get_settings
 from src.core.exceptions import LLMError, LLMRateLimitError
-
 
 # OpenCode auth.json location
 OPENCODE_AUTH_PATH = Path.home() / ".local" / "share" / "opencode" / "auth.json"
@@ -23,31 +22,31 @@ OPENCODE_AUTH_PATH = Path.home() / ".local" / "share" / "opencode" / "auth.json"
 
 def get_opencode_token(provider: str) -> str | None:
     """Read OAuth access token from OpenCode auth.json.
-    
+
     Args:
         provider: "anthropic" or "openai"
-    
+
     Returns:
         Access token string or None if not found/expired
     """
     if not OPENCODE_AUTH_PATH.exists():
         return None
-    
+
     try:
         with open(OPENCODE_AUTH_PATH) as f:
             auth_data = json.load(f)
-        
+
         if provider not in auth_data:
             return None
-        
+
         provider_data = auth_data[provider]
         access_token = provider_data.get("access")
         expires = provider_data.get("expires", 0)
-        
+
         # Check if token is expired (with 5 min buffer)
         if expires > 0 and expires < (time.time() * 1000 + 300000):
             return None
-        
+
         return access_token
     except (json.JSONDecodeError, KeyError, OSError):
         return None
@@ -136,7 +135,7 @@ class OpenAIClient(LLMClient):
             if system:
                 messages.append({"role": "system", "content": system})
             messages.append({"role": "user", "content": prompt})
-            
+
             response = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,

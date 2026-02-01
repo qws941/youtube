@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Optional, Any
-from datetime import datetime, timezone
+from typing import Any
 
-from google.oauth2.credentials import Credentials  # type: ignore[import-untyped]
 from google.auth.transport.requests import Request  # type: ignore[import-untyped]
+from google.oauth2.credentials import Credentials  # type: ignore[import-untyped]
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
 from googleapiclient.discovery import build  # type: ignore[import-untyped]
 
@@ -26,14 +24,14 @@ class YouTubeAuth:
         self._settings = get_settings()
         self._token_path = self._settings.youtube.token_file
         self._client_secrets_path = self._settings.youtube.client_secrets_file
-        self._credentials: Optional[Credentials] = None
+        self._credentials: Credentials | None = None
         self._youtube: Any = None
         self._analytics: Any = None
 
     def authenticate(self, headless: bool = False) -> Credentials:
         if self._credentials and self._credentials.valid:
             return self._credentials
-        
+
         if self._token_path.exists():
             creds = self._load_token()
             if creds and creds.valid:
@@ -46,7 +44,7 @@ class YouTubeAuth:
                     return self._credentials  # type: ignore
                 except Exception:
                     pass
-        
+
         self._credentials = self._run_oauth_flow(headless=headless)
         return self._credentials
 
@@ -75,9 +73,9 @@ class YouTubeAuth:
         return self._run_oauth_flow()
 
     def _load_token(self) -> Credentials:
-        with open(self._token_path, "r") as f:
+        with open(self._token_path) as f:
             token_data = json.load(f)
-        
+
         creds = Credentials(
             token=token_data.get("token"),
             refresh_token=token_data.get("refresh_token"),
@@ -86,13 +84,13 @@ class YouTubeAuth:
             client_secret=token_data.get("client_secret"),
             scopes=token_data.get("scopes"),
         )
-        
+
         if creds.expired and creds.refresh_token:
             self._credentials = creds
             self._refresh_token()
             if self._credentials is not None:
                 return self._credentials
-        
+
         return creds
 
     def _save_token(self, creds: Credentials) -> None:
@@ -114,13 +112,13 @@ class YouTubeAuth:
             raise YouTubeAuthError(
                 f"client_secrets.json not found at {self._client_secrets_path}"
             )
-        
+
         try:
             flow = InstalledAppFlow.from_client_secrets_file(
                 str(self._client_secrets_path),
                 scopes=SCOPES,
             )
-            
+
             if headless:
                 flow.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
                 auth_url, _ = flow.authorization_url(prompt="consent")
@@ -134,7 +132,7 @@ class YouTubeAuth:
                 except Exception:
                     print("\n브라우저를 열 수 없습니다. --headless 옵션을 사용하세요.\n")
                     raise
-            
+
             self._save_token(creds)
             return creds
         except Exception as e:
@@ -143,7 +141,7 @@ class YouTubeAuth:
     def _refresh_token(self) -> None:
         if not self._credentials:
             raise YouTubeAuthError("No credentials to refresh")
-        
+
         try:
             self._credentials.refresh(Request())
             self._save_token(self._credentials)

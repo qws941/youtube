@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Optional, Any
+from typing import Any
 
 from src.core.models import ChannelType
 
@@ -46,10 +46,7 @@ class SEOOptimizer:
 
         if not keywords_in_title and self._keywords:
             primary_keyword = self._keywords[0]
-            if add_brackets:
-                title = f"[{primary_keyword}] {title}"
-            else:
-                title = f"{primary_keyword} {title}"
+            title = f"[{primary_keyword}] {title}" if add_brackets else f"{primary_keyword} {title}"
 
         if len(title) > max_length:
             title = self._truncate_smart(title, max_length)
@@ -91,8 +88,8 @@ class SEOOptimizer:
     def generate_description(
         self,
         script: Any,
-        channel_name: Optional[str] = None,
-        channel_url: Optional[str] = None,
+        channel_name: str | None = None,
+        channel_url: str | None = None,
         include_timestamps: bool = True,
         include_hashtags: bool = True,
     ) -> str:
@@ -255,8 +252,8 @@ class SEOOptimizer:
         self,
         script: Any,
         raw_title: str,
-        channel_name: Optional[str] = None,
-        channel_url: Optional[str] = None,
+        channel_name: str | None = None,
+        channel_url: str | None = None,
     ) -> dict[str, Any]:
         return {
             "title": self.optimize_title(raw_title),

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator
 
 from src.core.models import (
     AudioSegment,
@@ -18,11 +18,11 @@ class ScriptGenerator(ABC):
     @abstractmethod
     async def generate_topic(self, channel: ChannelType) -> str:
         pass
-    
+
     @abstractmethod
     async def generate_script(self, topic: str, channel: ChannelType) -> Script:
         pass
-    
+
     @abstractmethod
     async def validate_script(self, script: Script) -> tuple[bool, list[str]]:
         pass
@@ -37,7 +37,7 @@ class TTSEngine(ABC):
         output_path: Path,
     ) -> AudioSegment:
         pass
-    
+
     @abstractmethod
     async def synthesize_with_emotions(
         self,
@@ -46,7 +46,7 @@ class TTSEngine(ABC):
         output_dir: Path,
     ) -> list[AudioSegment]:
         pass
-    
+
     @abstractmethod
     async def get_available_voices(self) -> list[dict]:
         pass
@@ -61,7 +61,7 @@ class ImageGenerator(ABC):
         **kwargs,
     ) -> VisualAsset:
         pass
-    
+
     @abstractmethod
     async def generate_batch(
         self,
@@ -102,7 +102,7 @@ class VideoComposer(ABC):
         output_path: Path,
     ) -> Path:
         pass
-    
+
     @abstractmethod
     async def add_subtitles(
         self,
@@ -122,7 +122,7 @@ class ThumbnailGenerator(ABC):
         output_path: Path,
     ) -> Thumbnail:
         pass
-    
+
     @abstractmethod
     async def generate_variants(
         self,
@@ -146,7 +146,7 @@ class YouTubeUploader(ABC):
         scheduled_at: str | None = None,
     ) -> str:
         pass
-    
+
     @abstractmethod
     async def update_thumbnail(
         self,
@@ -154,7 +154,7 @@ class YouTubeUploader(ABC):
         thumbnail_path: Path,
     ) -> bool:
         pass
-    
+
     @abstractmethod
     async def get_analytics(
         self,
@@ -167,7 +167,7 @@ class ContentPipeline(ABC):
     @abstractmethod
     async def run(self, channel: ChannelType) -> VideoProject:
         pass
-    
+
     @abstractmethod
     def run_batch(
         self,

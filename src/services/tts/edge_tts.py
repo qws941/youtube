@@ -5,11 +5,10 @@ from pathlib import Path
 from typing import Literal
 
 import edge_tts
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from src.core.models import AudioSegment
 from src.core.exceptions import TTSError
-
+from src.core.models import AudioSegment
 
 VoiceGender = Literal["Male", "Female"]
 
@@ -34,7 +33,7 @@ ENGLISH_VOICES = {
 class EdgeTTSClient:
     DEFAULT_VOICE_KO = "ko-KR-SunHiNeural"
     DEFAULT_VOICE_EN = "en-US-GuyNeural"
-    
+
     def __init__(
         self,
         rate: str = "+0%",
@@ -44,7 +43,7 @@ class EdgeTTSClient:
         self._rate = rate
         self._volume = volume
         self._pitch = pitch
-    
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -68,7 +67,7 @@ class EdgeTTSClient:
             pitch=pitch or self._pitch,
         )
         await communicate.save(str(output_path))
-    
+
     def synthesize(
         self,
         text: str,
@@ -80,7 +79,7 @@ class EdgeTTSClient:
     ) -> AudioSegment:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
@@ -94,9 +93,9 @@ class EdgeTTSClient:
                 )
         except Exception as e:
             raise TTSError(f"Edge TTS synthesis failed: {e}") from e
-        
+
         duration = self._get_audio_duration(output_path)
-        
+
         return AudioSegment(
             path=output_path,
             duration=duration,
@@ -104,7 +103,7 @@ class EdgeTTSClient:
             start_time=0.0,
             voice_id=voice,
         )
-    
+
     async def synthesize_async(
         self,
         text: str,
@@ -116,14 +115,14 @@ class EdgeTTSClient:
     ) -> AudioSegment:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         try:
             await self._synthesize_async(text, voice, output_path, rate, volume, pitch)
         except Exception as e:
             raise TTSError(f"Edge TTS synthesis failed: {e}") from e
-        
+
         duration = self._get_audio_duration(output_path)
-        
+
         return AudioSegment(
             path=output_path,
             duration=duration,
@@ -131,7 +130,7 @@ class EdgeTTSClient:
             start_time=0.0,
             voice_id=voice,
         )
-    
+
     def _get_audio_duration(self, path: Path) -> float:
         try:
             from mutagen.mp3 import MP3
@@ -139,40 +138,40 @@ class EdgeTTSClient:
             return audio.info.length
         except Exception:
             return 0.0
-    
+
     @staticmethod
     async def get_available_voices() -> list[dict]:
         voices = await edge_tts.list_voices()  # type: ignore[attr-defined]
         return voices  # type: ignore[return-value]
-    
+
     @staticmethod
     def get_korean_voices() -> dict[str, dict]:
         return KOREAN_VOICES.copy()
-    
+
     @staticmethod
     def get_english_voices() -> dict[str, dict]:
         return ENGLISH_VOICES.copy()
-    
+
     def get_voice_for_language(
         self,
         language: str,
         gender: VoiceGender = "Female",
     ) -> str:
         lang_lower = language.lower()
-        
+
         if lang_lower in ("ko", "korean", "ko-kr"):
             voices = KOREAN_VOICES
             default = self.DEFAULT_VOICE_KO
         else:
             voices = ENGLISH_VOICES
             default = self.DEFAULT_VOICE_EN
-        
+
         for voice_id, info in voices.items():
             if info["gender"] == gender:
                 return voice_id
-        
+
         return default
-    
+
     def adjust_rate_for_emotion(self, emotion: str) -> str:
         emotion_rates = {
             "excited": "+15%",
@@ -185,7 +184,7 @@ class EdgeTTSClient:
             "suspenseful": "-15%",
         }
         return emotion_rates.get(emotion.lower(), "+0%")
-    
+
     def adjust_pitch_for_emotion(self, emotion: str) -> str:
         emotion_pitches = {
             "excited": "+50Hz",

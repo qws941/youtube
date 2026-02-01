@@ -1,19 +1,19 @@
-from pathlib import Path
-from typing import Optional, Any, TYPE_CHECKING
-import subprocess
-import shutil
-import tempfile
-import json
 import asyncio
+import json
+import shutil
+import subprocess
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from config import get_settings
-from src.core.exceptions import VideoCompositionError, FFmpegError
-from src.services.video.subtitles import SubtitleGenerator, SubtitleStyle
+from src.core.exceptions import FFmpegError, VideoCompositionError
 from src.services.video.music import MusicMixer
+from src.services.video.subtitles import SubtitleGenerator, SubtitleStyle
 
 if TYPE_CHECKING:
-    from src.core.models import VideoProject, Script, AudioSegment, VisualAsset
+    pass
 
 
 class VideoComposer:
@@ -55,7 +55,7 @@ class VideoComposer:
         video_path: Path,
         script: Any,
         output_path: Path,
-        style: Optional[dict] = None,
+        style: dict | None = None,
     ) -> Path:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -114,7 +114,7 @@ class VideoComposer:
         video_path: Path,
         script: Any,
         output_path: Path,
-        style: Optional[dict] = None,
+        style: dict | None = None,
     ) -> Path:
         with tempfile.TemporaryDirectory(dir=self.temp_dir) as temp:
             temp_path = Path(temp)
@@ -148,7 +148,7 @@ class VideoComposer:
         video_path: Path,
         srt_path: Path,
         output_path: Path,
-        style: Optional[dict] = None,
+        style: dict | None = None,
     ) -> Path:
         filter_str = SubtitleStyle.get_ffmpeg_args(srt_path, style)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -187,7 +187,7 @@ class VideoComposer:
                     return list(val)
         return []
 
-    def _get_channel_type(self, project: Any) -> Optional[str]:
+    def _get_channel_type(self, project: Any) -> str | None:
         for attr in ("channel_type", "channel", "niche"):
             if hasattr(project, attr):
                 val = getattr(project, attr)
@@ -345,7 +345,7 @@ class VideoComposer:
         self,
         segments: list[Any],
         temp_dir: Path,
-    ) -> Optional[Path]:
+    ) -> Path | None:
         if not segments:
             return None
 

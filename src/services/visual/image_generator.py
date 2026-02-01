@@ -8,13 +8,12 @@ from typing import Any
 import httpx
 import replicate
 from openai import AsyncOpenAI
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from config import get_settings
-from src.core.interfaces import ImageGenerator as ImageGeneratorABC
-from src.core.models import VisualAsset, ChannelType
 from src.core.exceptions import ImageGenerationError
-
+from src.core.interfaces import ImageGenerator as ImageGeneratorABC
+from src.core.models import ChannelType, VisualAsset
 
 CHANNEL_STYLE_PRESETS: dict[ChannelType, dict[str, Any]] = {
     ChannelType.HORROR: {

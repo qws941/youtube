@@ -1,5 +1,5 @@
-from src.services.visual.image_generator import ImageGenerator, CHANNEL_STYLE_PRESETS
-from src.services.visual.video_generator import VideoGenerator, CHANNEL_MOTION_PRESETS
+from src.services.visual.image_generator import CHANNEL_STYLE_PRESETS, ImageGenerator
+from src.services.visual.video_generator import CHANNEL_MOTION_PRESETS, VideoGenerator
 
 __all__ = [
     "ImageGenerator",

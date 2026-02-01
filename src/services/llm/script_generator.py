@@ -1,15 +1,13 @@
-from typing import Any
 import re
 
-from src.core.interfaces import ScriptGenerator as ScriptGeneratorABC
-from src.core.models import Script, ChannelType
 from src.core.exceptions import LLMError
+from src.core.interfaces import ScriptGenerator as ScriptGeneratorABC
+from src.core.models import ChannelType, Script
 from src.services.llm.client import LLMClient, get_llm_client
-
 
 CHANNEL_PROMPTS = {
     ChannelType.HORROR: {
-        "topic_system": """You are a viral horror/mystery content strategist. 
+        "topic_system": """You are a viral horror/mystery content strategist.
 Generate unique, clickable topic ideas that evoke fear, curiosity, and the unknown.
 Focus on: unsolved mysteries, creepy true stories, urban legends, paranormal events.""",
         "topic_prompt": """Generate a compelling horror/mystery video topic.
@@ -92,7 +90,7 @@ class ScriptGeneratorImpl(ScriptGeneratorABC):
         prompts = CHANNEL_PROMPTS.get(channel)
         if not prompts:
             raise LLMError(f"No prompts configured for channel: {channel}")
-        
+
         result = await self._client.generate(
             prompt=prompts["topic_prompt"],
             system=prompts["topic_system"],
@@ -148,7 +146,7 @@ class ScriptGeneratorImpl(ScriptGeneratorABC):
 
         full_script = f"{script.hook} {script.body} {script.cta}"
         word_count = len(full_script.split())
-        
+
         if word_count < 800:
             errors.append(f"Script too short: {word_count} words (min 800)")
         elif word_count > 2500:

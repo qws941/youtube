@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import asyncio
-import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -41,9 +41,9 @@ def reset_singletons():
 
 def _reset_all_singletons():
     """Reset orchestrator and settings singletons."""
-    from src.core.orchestrator import reset_orchestrator
     from config.settings import reload_settings
-    
+    from src.core.orchestrator import reset_orchestrator
+
     reset_orchestrator()
     reload_settings()
 
@@ -112,7 +112,7 @@ def tmp_assets_dir(tmp_path: Path) -> Path:
     assets_dir.mkdir(parents=True, exist_ok=True)
     (assets_dir / "music").mkdir()
     (assets_dir / "fonts").mkdir()
-    
+
     return assets_dir
 
 
@@ -125,7 +125,7 @@ def tmp_assets_dir(tmp_path: Path) -> Path:
 def mock_script_generator() -> MagicMock:
     """Create a mock ScriptGenerator."""
     from src.core.models import ChannelType, Script
-    
+
     mock = MagicMock()
     mock.generate_topic = AsyncMock(return_value=["Test Topic 1", "Test Topic 2"])
     mock.generate_script = AsyncMock(
@@ -218,10 +218,10 @@ def mock_services(
 
 
 @pytest.fixture
-def orchestrator_dry_run() -> "Orchestrator":
+def orchestrator_dry_run() -> Orchestrator:
     """Create an orchestrator in dry-run mode for testing."""
     from src.core.orchestrator import Orchestrator
-    
+
     return Orchestrator(
         max_concurrent=2,
         max_retries=3,
@@ -232,16 +232,16 @@ def orchestrator_dry_run() -> "Orchestrator":
 
 @pytest.fixture
 def orchestrator_with_mock_pipeline(
-    orchestrator_dry_run: "Orchestrator",
-) -> "Orchestrator":
+    orchestrator_dry_run: Orchestrator,
+) -> Orchestrator:
     """Create an orchestrator with a mock pipeline registered."""
     mock_pipeline = MagicMock()
     mock_pipeline.run = AsyncMock(return_value={"status": "completed"})
-    
+
     orchestrator_dry_run.register_pipeline("horror", mock_pipeline)
     orchestrator_dry_run.register_pipeline("facts", mock_pipeline)
     orchestrator_dry_run.register_pipeline("finance", mock_pipeline)
-    
+
     return orchestrator_dry_run
 
 
@@ -254,7 +254,7 @@ def orchestrator_with_mock_pipeline(
 def horror_pipeline(mock_services, tmp_output_dir):
     """Create a HorrorPipeline with mock services."""
     from src.channels.horror import HorrorPipeline
-    
+
     return HorrorPipeline(
         script_generator=mock_services["script_generator"],
         tts_engine=mock_services["tts_engine"],
@@ -271,7 +271,7 @@ def horror_pipeline(mock_services, tmp_output_dir):
 def facts_pipeline(mock_services, tmp_output_dir):
     """Create a FactsPipeline with mock services."""
     from src.channels.facts import FactsPipeline
-    
+
     return FactsPipeline(
         script_generator=mock_services["script_generator"],
         tts_engine=mock_services["tts_engine"],
@@ -288,7 +288,7 @@ def facts_pipeline(mock_services, tmp_output_dir):
 def finance_pipeline(mock_services, tmp_output_dir):
     """Create a FinancePipeline with mock services."""
     from src.channels.finance import FinancePipeline
-    
+
     return FinancePipeline(
         script_generator=mock_services["script_generator"],
         tts_engine=mock_services["tts_engine"],
@@ -316,7 +316,7 @@ def test_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     (tmp_path / "output").mkdir(exist_ok=True)
     (tmp_path / "assets").mkdir(exist_ok=True)
     (tmp_path / "templates").mkdir(exist_ok=True)
-    
+
     from config.settings import reload_settings
     return reload_settings()
 

@@ -2,22 +2,19 @@
 from __future__ import annotations
 
 import asyncio
-import os
-import sys
-from enum import Enum
-from pathlib import Path
-from typing import Optional
-
 import logging
+import os
+from enum import Enum
+
 import structlog
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
 
 from config import get_settings
-from src.core.orchestrator import Orchestrator, get_orchestrator, JobStatus
+from src.core.orchestrator import JobStatus, Orchestrator, get_orchestrator
 
 structlog.configure(
     processors=[
@@ -266,13 +263,13 @@ def youtube_auth(
     headless: bool = typer.Option(False, "--headless", "-H", help="브라우저 없이 수동 인증 (URL 복사 방식)"),
 ):
     """YouTube OAuth 인증 실행."""
-    from src.services.youtube.auth import YouTubeAuth
     from src.core.exceptions import YouTubeAuthError
-    
+    from src.services.youtube.auth import YouTubeAuth
+
     settings = get_settings()
     client_secrets_path = settings.youtube.client_secrets_file
     token_path = settings.youtube.token_file
-    
+
     # client_secrets.json 존재 확인
     if not client_secrets_path.exists():
         console.print(Panel(
@@ -289,17 +286,17 @@ def youtube_auth(
             border_style="red",
         ))
         raise typer.Exit(1)
-    
+
     # 기존 토큰 확인
     if token_path.exists() and not force:
         console.print("[yellow]이미 인증되어 있습니다. 재인증하려면 --force 옵션을 사용하세요.[/yellow]")
         raise typer.Exit(0)
-    
+
     # 기존 토큰 삭제 (force 모드)
     if force and token_path.exists():
         token_path.unlink()
         console.print("[dim]기존 토큰 삭제됨[/dim]")
-    
+
     console.print(Panel(
         "[bold cyan]브라우저에서 Google 로그인 창이 열립니다.[/bold cyan]\n\n"
         "1. Google 계정으로 로그인\n"
@@ -308,11 +305,11 @@ def youtube_auth(
         title="🔐 YouTube 인증",
         border_style="cyan",
     ))
-    
+
     try:
         auth = YouTubeAuth()
         _ = auth.authenticate(headless=headless)
-        
+
         console.print(Panel(
             "[bold green]✓ YouTube 인증 완료![/bold green]\n\n"
             f"토큰 저장됨: {token_path}",
@@ -329,28 +326,28 @@ def youtube_status():
     """YouTube 인증 상태 확인."""
     import json
     from datetime import datetime
-    
+
     settings = get_settings()
     token_path = settings.youtube.token_file
     client_secrets_path = settings.youtube.client_secrets_file
-    
+
     table = Table(title="YouTube 인증 상태", show_header=True)
     table.add_column("항목", style="cyan")
     table.add_column("상태", style="green")
     table.add_column("상세")
-    
+
     # client_secrets.json 확인
     if client_secrets_path.exists():
         table.add_row("client_secrets.json", "[green]✓ 있음[/green]", str(client_secrets_path))
     else:
         table.add_row("client_secrets.json", "[red]✗ 없음[/red]", "Google Cloud Console에서 다운로드 필요")
-    
+
     # 토큰 파일 확인
     if token_path.exists():
         try:
-            with open(token_path, "r") as f:
+            with open(token_path) as f:
                 token_data = json.load(f)
-            
+
             expiry_str = token_data.get("expiry", "")
             if expiry_str:
                 try:
@@ -365,18 +362,18 @@ def youtube_status():
                     table.add_row("토큰", "[green]✓ 있음[/green]", "만료 시간 파싱 실패")
             else:
                 table.add_row("토큰", "[green]✓ 있음[/green]", "만료 시간 없음")
-            
+
             # 스코프 확인
             scopes = token_data.get("scopes", [])
             if scopes:
                 scope_names = [s.split("/")[-1] for s in scopes]
                 table.add_row("스코프", "[green]✓[/green]", ", ".join(scope_names))
-            
+
         except json.JSONDecodeError:
             table.add_row("토큰", "[red]✗ 손상됨[/red]", "ytauto youtube auth 재실행 필요")
     else:
         table.add_row("토큰", "[red]✗ 없음[/red]", "ytauto youtube auth 실행 필요")
-    
+
     console.print(table)
 
 
@@ -386,24 +383,24 @@ def youtube_revoke(
 ):
     """YouTube 인증 토큰 삭제."""
     from src.services.youtube.auth import YouTubeAuth
-    
+
     settings = get_settings()
     token_path = settings.youtube.token_file
-    
+
     if not token_path.exists():
         console.print("[yellow]삭제할 토큰이 없습니다.[/yellow]")
         raise typer.Exit(0)
-    
+
     if not confirm:
         confirm_input = typer.confirm("정말로 YouTube 인증을 취소하시겠습니까?")
         if not confirm_input:
             console.print("[dim]취소됨[/dim]")
             raise typer.Exit(0)
-    
+
     try:
         auth = YouTubeAuth()
         success = auth.revoke()
-        
+
         if success:
             console.print("[green]✓ YouTube 인증이 취소되었습니다.[/green]")
         else:

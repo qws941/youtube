@@ -1,9 +1,9 @@
-from pathlib import Path
-from typing import Optional
-import random
-import subprocess
+import contextlib
 import json
+import random
 import shutil
+import subprocess
+from pathlib import Path
 
 from config import get_settings
 from src.core.exceptions import FFmpegError
@@ -19,7 +19,7 @@ class MusicMixer:
     DEFAULT_VOLUME = 0.18
     FADE_DURATION = 2.0
 
-    def __init__(self, music_dir: Optional[Path] = None):
+    def __init__(self, music_dir: Path | None = None):
         settings = get_settings()
         self.music_dir = music_dir or Path(settings.assets_dir) / "music"
         self._ffmpeg = shutil.which("ffmpeg")
@@ -28,8 +28,8 @@ class MusicMixer:
     def select_music(
         self,
         channel_type: str,
-        mood: Optional[str] = None,
-    ) -> Optional[Path]:
+        mood: str | None = None,
+    ) -> Path | None:
         categories = self.CHANNEL_MUSIC_MAP.get(channel_type, ["ambient"])
         if mood:
             categories = [mood] + categories
@@ -118,15 +118,11 @@ class MusicMixer:
 
         for line in result.stderr.split("\n"):
             if '"input_i"' in line:
-                try:
+                with contextlib.suppress(ValueError, IndexError):
                     measured_i = float(line.split(":")[1].strip().strip('",'))
-                except (ValueError, IndexError):
-                    pass
             elif '"input_tp"' in line:
-                try:
+                with contextlib.suppress(ValueError, IndexError):
                     measured_tp = float(line.split(":")[1].strip().strip('",'))
-                except (ValueError, IndexError):
-                    pass
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -196,8 +192,8 @@ class MusicMixer:
         channel_type: str,
         target_duration: float,
         output_path: Path,
-        mood: Optional[str] = None,
-    ) -> Optional[Path]:
+        mood: str | None = None,
+    ) -> Path | None:
         music_file = self.select_music(channel_type, mood)
         if not music_file:
             return None

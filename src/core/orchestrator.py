@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import signal
 import sys
 import uuid
@@ -9,14 +10,13 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Coroutine
+from typing import TYPE_CHECKING, Any
 
 import schedule
 import structlog
 
 if TYPE_CHECKING:
-    from src.core.models import ChannelType, VideoProject
+    pass
 
 logger = structlog.get_logger(__name__)
 
@@ -177,7 +177,7 @@ class Orchestrator:
                 job = await asyncio.wait_for(self._queue.get(), timeout=1.0)
                 await self._process_job(job)
                 self._queue.task_done()
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except asyncio.CancelledError:
                 break
@@ -224,10 +224,8 @@ class Orchestrator:
 
         if self._scheduler_task:
             self._scheduler_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._scheduler_task
-            except asyncio.CancelledError:
-                pass
 
         for worker in self._workers:
             worker.cancel()

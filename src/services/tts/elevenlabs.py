@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-import httpx
 from pathlib import Path
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+import httpx
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from config import get_settings
-from src.core.models import AudioSegment
 from src.core.exceptions import TTSError, TTSQuotaExceededError
+from src.core.models import AudioSegment
 
 
 class ElevenLabsClient:
     BASE_URL = "https://api.elevenlabs.io/v1"
     MODEL_ID = "eleven_multilingual_v2"
-    
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -32,16 +33,16 @@ class ElevenLabsClient:
             headers={"xi-api-key": self._api_key},
             timeout=120.0,
         )
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, *args):
         self.close()
-    
+
     def close(self):
         self._client.close()
-    
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -58,7 +59,7 @@ class ElevenLabsClient:
     ) -> AudioSegment:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         payload = {
             "text": text,
             "model_id": self.MODEL_ID,
@@ -70,7 +71,7 @@ class ElevenLabsClient:
             },
             "output_format": "mp3_44100_128",
         }
-        
+
         try:
             with self._client.stream(
                 "POST",
@@ -83,7 +84,7 @@ class ElevenLabsClient:
                     raise TTSQuotaExceededError("ElevenLabs quota exceeded")
                 if response.status_code != 200:
                     raise TTSError(f"ElevenLabs API error: {response.status_code}")
-                
+
                 with open(output_path, "wb") as f:
                     for chunk in response.iter_bytes(chunk_size=8192):
                         f.write(chunk)
@@ -93,9 +94,9 @@ class ElevenLabsClient:
             raise TTSError(f"ElevenLabs HTTP error: {e}") from e
         except httpx.RequestError as e:
             raise TTSError(f"ElevenLabs request failed: {e}") from e
-        
+
         duration = self._get_audio_duration(output_path)
-        
+
         return AudioSegment(
             path=output_path,
             duration=duration,
@@ -103,7 +104,7 @@ class ElevenLabsClient:
             start_time=0.0,
             voice_id=voice_id,
         )
-    
+
     def _get_audio_duration(self, path: Path) -> float:
         try:
             from mutagen.mp3 import MP3
@@ -111,7 +112,7 @@ class ElevenLabsClient:
             return audio.info.length
         except Exception:
             return 0.0
-    
+
     def get_voices(self) -> list[dict]:
         try:
             response = self._client.get("/voices")
@@ -119,7 +120,7 @@ class ElevenLabsClient:
             return response.json().get("voices", [])
         except httpx.HTTPError as e:
             raise TTSError(f"Failed to fetch voices: {e}") from e
-    
+
     def get_user_subscription(self) -> dict:
         try:
             response = self._client.get("/user/subscription")

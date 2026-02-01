@@ -37,17 +37,17 @@ class Script:
     body: str
     cta: str
     channel: ChannelType
-    
+
     id: UUID = field(default_factory=uuid4)
     keywords: list[str] = field(default_factory=list)
     emotion_markers: dict[str, list[tuple[int, int]]] = field(default_factory=dict)
     estimated_duration: int = 0
     created_at: datetime = field(default_factory=datetime.now)
-    
+
     @property
     def full_text(self) -> str:
         return f"{self.hook}\n\n{self.body}\n\n{self.cta}"
-    
+
     @property
     def word_count(self) -> int:
         return len(self.full_text.split())
@@ -86,20 +86,20 @@ class VideoProject:
     channel: ChannelType
     script: Script
     status: ContentStatus = ContentStatus.PENDING
-    
+
     audio_segments: list[AudioSegment] = field(default_factory=list)
     visual_assets: list[VisualAsset] = field(default_factory=list)
     background_music: Path | None = None
     thumbnails: list[Thumbnail] = field(default_factory=list)
-    
+
     output_path: Path | None = None
     youtube_id: str | None = None
     scheduled_at: datetime | None = None
-    
+
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
     error_message: str | None = None
-    
+
     @classmethod
     def create(cls, channel: ChannelType, script: Script) -> VideoProject:
         return cls(
@@ -107,12 +107,12 @@ class VideoProject:
             channel=channel,
             script=script,
         )
-    
+
     def mark_failed(self, error: str) -> None:
         self.status = ContentStatus.FAILED
         self.error_message = error
         self.updated_at = datetime.now()
-    
+
     def mark_completed(self, output_path: Path) -> None:
         self.status = ContentStatus.COMPLETED
         self.output_path = output_path
@@ -125,15 +125,15 @@ class ChannelConfig:
     name: str
     youtube_channel_id: str
     voice_id: str
-    
+
     upload_schedule: str
     target_duration: tuple[int, int] = (480, 600)
     style: VideoStyle = VideoStyle.STORYTELLING
-    
+
     topics: list[str] = field(default_factory=list)
     banned_topics: list[str] = field(default_factory=list)
     thumbnail_style: str = "dramatic"
-    
+
     hashtags: list[str] = field(default_factory=list)
     default_tags: list[str] = field(default_factory=list)
 

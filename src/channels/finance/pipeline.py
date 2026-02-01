@@ -4,11 +4,22 @@ from __future__ import annotations
 import json
 import re
 import uuid
+from collections.abc import AsyncIterator
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, AsyncIterator, Protocol, runtime_checkable
 from logging import getLogger
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+from src.channels.finance.prompts import (
+    DESCRIPTION_TEMPLATE,
+    DISCLAIMER_TEXT,
+    FORBIDDEN_TOPICS,
+    SCRIPT_TEMPLATE,
+    TAGS_GENERATION,
+    TITLE_OPTIMIZATION,
+    TOPIC_GENERATION,
+    VISUAL_PROMPT_TEMPLATE,
+)
 from src.core.exceptions import PipelineError
 from src.core.interfaces import ContentPipeline
 from src.core.models import (
@@ -17,26 +28,15 @@ from src.core.models import (
     Script,
     VideoProject,
 )
-from src.channels.finance.prompts import (
-    FORBIDDEN_TOPICS,
-    TOPIC_GENERATION,
-    SCRIPT_TEMPLATE,
-    VISUAL_PROMPT_TEMPLATE,
-    THUMBNAIL_PROMPT_TEMPLATE,
-    TITLE_OPTIMIZATION,
-    DESCRIPTION_TEMPLATE,
-    TAGS_GENERATION,
-    DISCLAIMER_TEXT,
-)
 
 if TYPE_CHECKING:
     from src.core.interfaces import (
-        ScriptGenerator,
-        TTSEngine,
         ImageGenerator,
-        VideoGenerator,
-        VideoComposer,
+        ScriptGenerator,
         ThumbnailGenerator,
+        TTSEngine,
+        VideoComposer,
+        VideoGenerator,
         YouTubeUploader,
     )
 
@@ -51,7 +51,7 @@ class LLMClient(Protocol):
 
 class FinancePipeline(ContentPipeline):
     """Pipeline for finance/wealth education content."""
-    
+
     channel_type = ChannelType.FINANCE
 
     def __init__(
@@ -167,11 +167,11 @@ class FinancePipeline(ContentPipeline):
             category=topic.get("category", "investing"),
         )
         body = await self._llm_generate(prompt)
-        
+
         # Ensure disclaimer is in script
         if "educational purposes" not in body.lower():
             body = body + "\n\n" + DISCLAIMER_TEXT.strip()
-        
+
         title_variants = await self._generate_title_variants(topic)
         title = title_variants[0] if title_variants else topic.get("title", "Untitled")
 
@@ -221,7 +221,7 @@ class FinancePipeline(ContentPipeline):
     def _validate_script(self, script: Script) -> None:
         """Validate script content - extra strict for finance."""
         content = script.body.lower()
-        
+
         # Check forbidden topics
         for forbidden in FORBIDDEN_TOPICS:
             if forbidden in content:
@@ -316,7 +316,7 @@ class FinancePipeline(ContentPipeline):
                 mood = "aspirational, optimistic"
             else:
                 mood = "professional, educational"
-            
+
             scenes.append({
                 "description": para[:200],
                 "mood": mood,
