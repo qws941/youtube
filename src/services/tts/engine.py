@@ -78,7 +78,9 @@ class TTSEngineImpl:
             output_path = self._output_dir / f"{uuid.uuid4().hex}.mp3"
         output_path = Path(output_path)
 
-        resolved_voice = voice_id or self._get_voice_for_channel(channel_type, self._prefer_provider)
+        resolved_voice = voice_id or self._get_voice_for_channel(
+            channel_type, self._prefer_provider
+        )
 
         if self._prefer_provider == "elevenlabs" and self._elevenlabs:
             try:
@@ -95,7 +97,11 @@ class TTSEngineImpl:
                 raise
 
         if self._edge:
-            edge_voice = resolved_voice if "Neural" in (resolved_voice or "") else self._get_voice_for_channel(channel_type, cast(Provider, "edge"))
+            edge_voice = (
+                resolved_voice
+                if "Neural" in (resolved_voice or "")
+                else self._get_voice_for_channel(channel_type, cast(Provider, "edge"))
+            )
             return self._edge.synthesize(text, edge_voice, output_path)
 
         raise TTSError("No TTS provider available")
@@ -145,7 +151,9 @@ class TTSEngineImpl:
                 if temp_file.exists():
                     temp_file.unlink()
 
-        resolved_voice = voice_id or self._get_voice_for_channel(channel_type, self._prefer_provider)
+        resolved_voice = voice_id or self._get_voice_for_channel(
+            channel_type, self._prefer_provider
+        )
 
         return AudioSegment(
             path=output_path,
@@ -163,9 +171,13 @@ class TTSEngineImpl:
         output_path: Path,
         channel_type: ChannelType | None,
     ) -> AudioSegment:
-        settings_map = EMOTION_VOICE_SETTINGS.get(emotion.lower(), EMOTION_VOICE_SETTINGS["neutral"])
+        settings_map = EMOTION_VOICE_SETTINGS.get(
+            emotion.lower(), EMOTION_VOICE_SETTINGS["neutral"]
+        )
 
-        resolved_voice = voice_id or self._get_voice_for_channel(channel_type, self._prefer_provider)
+        resolved_voice = voice_id or self._get_voice_for_channel(
+            channel_type, self._prefer_provider
+        )
 
         if self._prefer_provider == "elevenlabs" and self._elevenlabs:
             try:
@@ -178,7 +190,9 @@ class TTSEngineImpl:
                 )
             except (TTSError, TTSQuotaExceededError):
                 if self._auto_fallback and self._edge:
-                    return self._synthesize_edge_with_emotion(text, emotion, output_path, channel_type)
+                    return self._synthesize_edge_with_emotion(
+                        text, emotion, output_path, channel_type
+                    )
                 raise
 
         if self._edge:
@@ -209,7 +223,7 @@ class TTSEngineImpl:
         )
 
     def _parse_emotion_markers(self, text: str) -> list[tuple[str, str]]:
-        pattern = r'\[(\w+)\](.*?)(?=\[\w+\]|$)'
+        pattern = r"\[(\w+)\](.*?)(?=\[\w+\]|$)"
         matches = re.findall(pattern, text, re.DOTALL)
 
         if not matches:

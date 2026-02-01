@@ -1,4 +1,5 @@
 """Finance channel content pipeline."""
+
 from __future__ import annotations
 
 import json
@@ -45,8 +46,7 @@ logger = getLogger(__name__)
 
 @runtime_checkable
 class LLMClient(Protocol):
-    async def generate(self, prompt: str) -> str:
-        ...
+    async def generate(self, prompt: str) -> str: ...
 
 
 class FinancePipeline(ContentPipeline):
@@ -97,7 +97,9 @@ class FinancePipeline(ContentPipeline):
             self._validate_script(script)
             audio_path = await self._generate_audio(output_path, script)
             visuals = await self._generate_visuals(output_path, script)
-            video_path = await self._compose_video(project, output_path, audio_path, visuals, script)
+            video_path = await self._compose_video(
+                project, output_path, audio_path, visuals, script
+            )
             thumbnails = await self._generate_thumbnails(output_path, topic)
             await self._upload_video(project, video_path, thumbnails, script, topic)
             project.mark_completed(output_path)
@@ -126,12 +128,16 @@ class FinancePipeline(ContentPipeline):
                 script=script,
                 output_path=output_path,
             )
-            logger.info("finance_batch_item_start project_id=%s topic=%s", project_id, topic.get("title"))
+            logger.info(
+                "finance_batch_item_start project_id=%s topic=%s", project_id, topic.get("title")
+            )
             try:
                 self._validate_script(script)
                 audio_path = await self._generate_audio(output_path, script)
                 visuals = await self._generate_visuals(output_path, script)
-                video_path = await self._compose_video(project, output_path, audio_path, visuals, script)
+                video_path = await self._compose_video(
+                    project, output_path, audio_path, visuals, script
+                )
                 thumbnails = await self._generate_thumbnails(output_path, topic)
                 await self._upload_video(project, video_path, thumbnails, script, topic)
                 project.mark_completed(output_path)
@@ -317,12 +323,14 @@ class FinancePipeline(ContentPipeline):
             else:
                 mood = "professional, educational"
 
-            scenes.append({
-                "description": para[:200],
-                "mood": mood,
-                "timestamp": f"{int(i * dur_per)}s",
-                "duration": max(3, min(8, int(dur_per))),
-            })
+            scenes.append(
+                {
+                    "description": para[:200],
+                    "mood": mood,
+                    "timestamp": f"{int(i * dur_per)}s",
+                    "duration": max(3, min(8, int(dur_per))),
+                }
+            )
         return scenes[:15]  # Max 15 scenes
 
     # Video composition

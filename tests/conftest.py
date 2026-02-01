@@ -1,4 +1,5 @@
 """Pytest configuration and shared fixtures for YouTube Automation tests."""
+
 from __future__ import annotations
 
 import asyncio
@@ -318,6 +319,7 @@ def test_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     (tmp_path / "templates").mkdir(exist_ok=True)
 
     from config.settings import reload_settings
+
     return reload_settings()
 
 
@@ -329,10 +331,12 @@ def test_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
 @pytest.fixture
 def run_async():
     """Helper to run async functions in sync tests."""
+
     def _run_async(coro):
         loop = asyncio.new_event_loop()
         try:
             return loop.run_until_complete(coro)
         finally:
             loop.close()
+
     return _run_async

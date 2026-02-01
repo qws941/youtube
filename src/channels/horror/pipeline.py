@@ -1,4 +1,5 @@
 """Horror channel content pipeline."""
+
 from __future__ import annotations
 
 import json
@@ -45,8 +46,8 @@ logger = getLogger(__name__)
 @runtime_checkable
 class LLMClient(Protocol):
     """Protocol for raw LLM text generation."""
-    async def generate(self, prompt: str) -> str:
-        ...
+
+    async def generate(self, prompt: str) -> str: ...
 
 
 class HorrorPipeline(ContentPipeline):
@@ -94,7 +95,9 @@ class HorrorPipeline(ContentPipeline):
             self._validate_script(script)
             audio_path = await self._generate_audio(output_path, script)
             visuals = await self._generate_visuals(output_path, script)
-            video_path = await self._compose_video(project, output_path, audio_path, visuals, script)
+            video_path = await self._compose_video(
+                project, output_path, audio_path, visuals, script
+            )
             thumbnails = await self._generate_thumbnails(output_path, topic)
             await self._upload_video(project, video_path, thumbnails, script, topic)
             video_file = output_path / "final.mp4"
@@ -128,7 +131,9 @@ class HorrorPipeline(ContentPipeline):
                 self._validate_script(script)
                 audio_path = await self._generate_audio(output_path, script)
                 visuals = await self._generate_visuals(output_path, script)
-                video_path = await self._compose_video(project, output_path, audio_path, visuals, script)
+                video_path = await self._compose_video(
+                    project, output_path, audio_path, visuals, script
+                )
                 thumbnails = await self._generate_thumbnails(output_path, topic)
                 await self._upload_video(project, video_path, thumbnails, script, topic)
                 video_file = output_path / "final.mp4"
@@ -274,13 +279,19 @@ class HorrorPipeline(ContentPipeline):
         dur_per = est_dur / max(len(paragraphs), 1)
 
         for i, para in enumerate(paragraphs):
-            mood = "intense" if any(w in para.lower() for w in ["terror", "scream", "fear"]) else "ominous"
-            scenes.append({
-                "description": para[:200],
-                "mood": mood,
-                "timestamp": f"{int(i * dur_per)}s",
-                "duration": max(3, min(10, int(dur_per))),
-            })
+            mood = (
+                "intense"
+                if any(w in para.lower() for w in ["terror", "scream", "fear"])
+                else "ominous"
+            )
+            scenes.append(
+                {
+                    "description": para[:200],
+                    "mood": mood,
+                    "timestamp": f"{int(i * dur_per)}s",
+                    "duration": max(3, min(10, int(dur_per))),
+                }
+            )
         return scenes[:20]
 
     async def _compose_video(

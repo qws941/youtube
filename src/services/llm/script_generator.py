@@ -152,7 +152,7 @@ class ScriptGeneratorImpl(ScriptGeneratorABC):
         elif word_count > 2500:
             errors.append(f"Script too long: {word_count} words (max 2500)")
 
-        profanity_patterns = [r'\b(fuck|shit|damn|ass)\b']
+        profanity_patterns = [r"\b(fuck|shit|damn|ass)\b"]
         for pattern in profanity_patterns:
             if re.search(pattern, full_script, re.IGNORECASE):
                 errors.append("Script contains profanity (demonetization risk)")

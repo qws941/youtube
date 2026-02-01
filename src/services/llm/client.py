@@ -58,7 +58,9 @@ class LLMClient(ABC):
         pass
 
     @abstractmethod
-    async def generate_json(self, prompt: str, system: str | None = None, **kwargs) -> dict[str, Any]:
+    async def generate_json(
+        self, prompt: str, system: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         pass
 
 
@@ -103,8 +105,12 @@ class AnthropicClient(LLMClient):
             raise LLMError(f"Anthropic generation failed: {e}") from e
 
     @_retry_decorator()
-    async def generate_json(self, prompt: str, system: str | None = None, **kwargs) -> dict[str, Any]:
-        json_system = (system or "") + "\n\nYou must respond with valid JSON only. No markdown, no explanation."
+    async def generate_json(
+        self, prompt: str, system: str | None = None, **kwargs
+    ) -> dict[str, Any]:
+        json_system = (
+            system or ""
+        ) + "\n\nYou must respond with valid JSON only. No markdown, no explanation."
         try:
             text = await self.generate(prompt, system=json_system, **kwargs)
             text = text.strip()
@@ -150,8 +156,12 @@ class OpenAIClient(LLMClient):
             raise LLMError(f"OpenAI generation failed: {e}") from e
 
     @_retry_decorator()
-    async def generate_json(self, prompt: str, system: str | None = None, **kwargs) -> dict[str, Any]:
-        json_system = (system or "") + "\n\nYou must respond with valid JSON only. No markdown, no explanation."
+    async def generate_json(
+        self, prompt: str, system: str | None = None, **kwargs
+    ) -> dict[str, Any]:
+        json_system = (
+            system or ""
+        ) + "\n\nYou must respond with valid JSON only. No markdown, no explanation."
         try:
             response = await self._client.chat.completions.create(
                 model=self._model,

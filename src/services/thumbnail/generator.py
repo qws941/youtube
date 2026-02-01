@@ -101,7 +101,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
             raise ThumbnailError("httpx not installed")
 
         prompt = style.prompt_template.format(subject=title)
-        provider = getattr(self.settings, 'image_provider', 'replicate')
+        provider = getattr(self.settings, "image_provider", "replicate")
 
         if provider == "openai":
             return await self._generate_dalle(prompt)
@@ -111,7 +111,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
         if httpx is None:
             raise ThumbnailError("httpx not installed")
 
-        api_key = getattr(self.settings, 'replicate_api_key', '')
+        api_key = getattr(self.settings, "replicate_api_key", "")
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 "https://api.replicate.com/v1/predictions",
@@ -156,7 +156,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
         if httpx is None:
             raise ThumbnailError("httpx not installed")
 
-        api_key = getattr(self.settings, 'openai_api_key', '')
+        api_key = getattr(self.settings, "openai_api_key", "")
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 "https://api.openai.com/v1/images/generations",
@@ -214,19 +214,92 @@ class ThumbnailGenerator(IThumbnailGenerator):
         return Image.composite(img, dark, mask)
 
     def _extract_display_text(self, title: str, max_words: int) -> str:
-        title = re.sub(r'[^\w\s]', '', title)
+        title = re.sub(r"[^\w\s]", "", title)
         words = title.split()
 
         stop_words = {
-            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-            'should', 'may', 'might', 'can', 'to', 'of', 'in', 'for', 'on', 'with',
-            'at', 'by', 'from', 'as', 'into', 'through', 'during', 'before', 'after',
-            'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once',
-            'here', 'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few',
-            'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only',
-            'own', 'same', 'so', 'than', 'too', 'very', 'just', 'and', 'but', 'if',
-            'or', 'because', 'until', 'while', 'this', 'that', 'these', 'those'
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "can",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "into",
+            "through",
+            "during",
+            "before",
+            "after",
+            "above",
+            "below",
+            "between",
+            "under",
+            "again",
+            "further",
+            "then",
+            "once",
+            "here",
+            "there",
+            "when",
+            "where",
+            "why",
+            "how",
+            "all",
+            "each",
+            "few",
+            "more",
+            "most",
+            "other",
+            "some",
+            "such",
+            "no",
+            "nor",
+            "not",
+            "only",
+            "own",
+            "same",
+            "so",
+            "than",
+            "too",
+            "very",
+            "just",
+            "and",
+            "but",
+            "if",
+            "or",
+            "because",
+            "until",
+            "while",
+            "this",
+            "that",
+            "these",
+            "those",
         }
 
         key_words = []
@@ -239,7 +312,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
         if not key_words and words:
             key_words = words[:max_words]
 
-        return ' '.join(key_words)
+        return " ".join(key_words)
 
     def _get_font(self, font_name: str, size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
         cache_key = (font_name, size)
@@ -284,7 +357,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
             current_line: list[str] = []
 
             for word in words:
-                test_line = ' '.join(current_line + [word])
+                test_line = " ".join(current_line + [word])
                 test_bbox = draw.textbbox((0, 0), test_line, font=font)
                 test_width = int(test_bbox[2] - test_bbox[0])
 
@@ -292,13 +365,13 @@ class ThumbnailGenerator(IThumbnailGenerator):
                     current_line.append(word)
                 else:
                     if current_line:
-                        lines.append(' '.join(current_line))
+                        lines.append(" ".join(current_line))
                     current_line = [word]
 
             if current_line:
-                lines.append(' '.join(current_line))
+                lines.append(" ".join(current_line))
 
-            text = '\n'.join(lines)
+            text = "\n".join(lines)
             bbox = draw.multiline_textbbox((0, 0), text, font=font)
             text_width = int(bbox[2] - bbox[0])
             text_height = int(bbox[3] - bbox[1])
@@ -308,8 +381,12 @@ class ThumbnailGenerator(IThumbnailGenerator):
         shadow_x = x + style.shadow_offset[0]
         shadow_y = y + style.shadow_offset[1]
         draw.multiline_text(
-            (shadow_x, shadow_y), text, font=font, fill=style.shadow_color,
-            align="center", spacing=style.line_spacing,
+            (shadow_x, shadow_y),
+            text,
+            font=font,
+            fill=style.shadow_color,
+            align="center",
+            spacing=style.line_spacing,
         )
 
         for offset_x in range(-style.stroke_width, style.stroke_width + 1):
@@ -317,13 +394,21 @@ class ThumbnailGenerator(IThumbnailGenerator):
                 if offset_x == 0 and offset_y == 0:
                     continue
                 draw.multiline_text(
-                    (x + offset_x, y + offset_y), text, font=font, fill=style.stroke_color,
-                    align="center", spacing=style.line_spacing,
+                    (x + offset_x, y + offset_y),
+                    text,
+                    font=font,
+                    fill=style.stroke_color,
+                    align="center",
+                    spacing=style.line_spacing,
                 )
 
         draw.multiline_text(
-            (x, y), text, font=font, fill=style.color,
-            align="center", spacing=style.line_spacing,
+            (x, y),
+            text,
+            font=font,
+            fill=style.color,
+            align="center",
+            spacing=style.line_spacing,
         )
 
         return img
@@ -348,7 +433,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
         return positions.get(position, (center_x, center_y))
 
     def _generate_filename(self, title: str, variant: str) -> str:
-        slug = re.sub(r'[^\w\s-]', '', title.lower())
-        slug = re.sub(r'[\s_]+', '-', slug)[:30]
+        slug = re.sub(r"[^\w\s-]", "", title.lower())
+        slug = re.sub(r"[\s_]+", "-", slug)[:30]
         hash_suffix = hashlib.md5(title.encode()).hexdigest()[:6]
         return f"thumb_{slug}_{variant}_{hash_suffix}.jpg"

@@ -1,18 +1,20 @@
 """Horror channel prompt templates."""
 
-FORBIDDEN_TOPICS = frozenset([
-    "gore",
-    "suicide",
-    "self-harm",
-    "self harm",
-    "child abuse",
-    "child exploitation",
-    "sexual violence",
-    "torture porn",
-    "real death footage",
-    "snuff",
-    "animal cruelty",
-])
+FORBIDDEN_TOPICS = frozenset(
+    [
+        "gore",
+        "suicide",
+        "self-harm",
+        "self harm",
+        "child abuse",
+        "child exploitation",
+        "sexual violence",
+        "torture porn",
+        "real death footage",
+        "snuff",
+        "animal cruelty",
+    ]
+)
 
 TOPIC_GENERATION = """You are a horror content strategist for a popular YouTube channel.
 Generate {count} unique, viral-worthy horror/mystery video topics.

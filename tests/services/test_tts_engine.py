@@ -1,4 +1,5 @@
 """Tests for TTS Engine with fallback chain."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -156,7 +157,9 @@ class TestTTSSynthesize:
 
                     engine = TTSEngineImpl(prefer_provider="elevenlabs", auto_fallback=False)
                     engine._elevenlabs = MagicMock()
-                    engine._elevenlabs.synthesize.side_effect = TTSQuotaExceededError("Quota exceeded")
+                    engine._elevenlabs.synthesize.side_effect = TTSQuotaExceededError(
+                        "Quota exceeded"
+                    )
 
                     with pytest.raises(TTSQuotaExceededError):
                         engine.synthesize(
@@ -225,8 +228,14 @@ class TestEmotionVoiceSettings:
         from src.services.tts.engine import EMOTION_VOICE_SETTINGS
 
         expected_emotions = [
-            "neutral", "excited", "sad", "angry",
-            "fearful", "suspenseful", "serious", "happy"
+            "neutral",
+            "excited",
+            "sad",
+            "angry",
+            "fearful",
+            "suspenseful",
+            "serious",
+            "happy",
         ]
 
         for emotion in expected_emotions:

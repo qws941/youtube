@@ -1,15 +1,17 @@
 """Facts channel prompt templates."""
 
-FORBIDDEN_TOPICS = frozenset([
-    "misinformation",
-    "conspiracy theories",
-    "flat earth",
-    "anti-vaccine",
-    "pseudoscience",
-    "medical advice",
-    "unverified health claims",
-    "political propaganda",
-])
+FORBIDDEN_TOPICS = frozenset(
+    [
+        "misinformation",
+        "conspiracy theories",
+        "flat earth",
+        "anti-vaccine",
+        "pseudoscience",
+        "medical advice",
+        "unverified health claims",
+        "political propaganda",
+    ]
+)
 
 TOPIC_GENERATION = """You are a content strategist for an educational "Mind-Blowing Facts" YouTube channel.
 Generate {count} unique, viral-worthy educational video topics.

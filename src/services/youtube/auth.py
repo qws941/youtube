@@ -109,9 +109,7 @@ class YouTubeAuth:
 
     def _run_oauth_flow(self, headless: bool = False) -> Credentials:
         if not self._client_secrets_path.exists():
-            raise YouTubeAuthError(
-                f"client_secrets.json not found at {self._client_secrets_path}"
-            )
+            raise YouTubeAuthError(f"client_secrets.json not found at {self._client_secrets_path}")
 
         try:
             flow = InstalledAppFlow.from_client_secrets_file(
@@ -154,6 +152,7 @@ class YouTubeAuth:
     def revoke(self) -> bool:
         if self._credentials and self._credentials.token:
             import requests
+
             response = requests.post(
                 "https://oauth2.googleapis.com/revoke",
                 params={"token": self._credentials.token},

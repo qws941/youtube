@@ -1,4 +1,5 @@
 """Orchestrator: 스케줄러, 큐잉, 모니터링 시스템."""
+
 from __future__ import annotations
 
 import asyncio
@@ -102,12 +103,15 @@ class Orchestrator:
         try:
             if channel == "horror":
                 from src.channels.horror import create_pipeline
+
                 self._pipelines[channel] = create_pipeline()
             elif channel == "facts":
                 from src.channels.facts import create_pipeline
+
                 self._pipelines[channel] = create_pipeline()
             elif channel == "finance":
                 from src.channels.finance import create_pipeline
+
                 self._pipelines[channel] = create_pipeline()
         except ImportError as e:
             logger.warning("pipeline_import_failed", channel=channel, error=str(e))
@@ -205,11 +209,11 @@ class Orchestrator:
             return
 
         self._state = OrchestratorState.RUNNING
-        logger.info("orchestrator_starting", max_concurrent=self.max_concurrent, dry_run=self.dry_run)
+        logger.info(
+            "orchestrator_starting", max_concurrent=self.max_concurrent, dry_run=self.dry_run
+        )
 
-        self._workers = [
-            asyncio.create_task(self._worker(i)) for i in range(self.max_concurrent)
-        ]
+        self._workers = [asyncio.create_task(self._worker(i)) for i in range(self.max_concurrent)]
         self._setup_schedules(schedules)
         self._scheduler_task = asyncio.create_task(self._scheduler_loop())
 
@@ -253,9 +257,7 @@ class Orchestrator:
         return self._jobs.get(job_id)
 
     def get_recent_jobs(self, limit: int = 10) -> list[JobRecord]:
-        return sorted(
-            self._jobs.values(), key=lambda j: j.created_at, reverse=True
-        )[:limit]
+        return sorted(self._jobs.values(), key=lambda j: j.created_at, reverse=True)[:limit]
 
     async def run_once(self, channel: str) -> str:
         job_id = await self.enqueue(channel)

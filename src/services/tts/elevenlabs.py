@@ -108,6 +108,7 @@ class ElevenLabsClient:
     def _get_audio_duration(self, path: Path) -> float:
         try:
             from mutagen.mp3 import MP3
+
             audio = MP3(path)
             return audio.info.length
         except Exception:

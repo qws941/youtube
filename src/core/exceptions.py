@@ -75,7 +75,9 @@ class ScriptValidationError(YouTubeAutomationError):
 
 
 class PipelineError(YTAutoError):
-    def __init__(self, message: str, stage: str | None = None, original_error: Exception | None = None):
+    def __init__(
+        self, message: str, stage: str | None = None, original_error: Exception | None = None
+    ):
         super().__init__(message)
         self.stage = stage
         self.original_error = original_error

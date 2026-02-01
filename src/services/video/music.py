@@ -50,9 +50,12 @@ class MusicMixer:
 
         cmd = [
             self._ffprobe,
-            "-v", "quiet",
-            "-show_entries", "format=duration",
-            "-of", "json",
+            "-v",
+            "quiet",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "json",
             str(audio_path),
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -79,11 +82,16 @@ class MusicMixer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-stream_loop", str(loop_count),
-            "-i", str(music_path),
-            "-t", str(target_duration),
-            "-c:a", "aac",
-            "-b:a", "192k",
+            "-stream_loop",
+            str(loop_count),
+            "-i",
+            str(music_path),
+            "-t",
+            str(target_duration),
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
             str(output_path),
         ]
 
@@ -104,9 +112,12 @@ class MusicMixer:
 
         analyze_cmd = [
             self._ffmpeg,
-            "-i", str(audio_path),
-            "-af", "loudnorm=print_format=json",
-            "-f", "null",
+            "-i",
+            str(audio_path),
+            "-af",
+            "loudnorm=print_format=json",
+            "-f",
+            "null",
             "-",
         ]
         result = subprocess.run(analyze_cmd, capture_output=True, text=True)
@@ -129,14 +140,18 @@ class MusicMixer:
         normalize_cmd = [
             self._ffmpeg,
             "-y",
-            "-i", str(audio_path),
-            "-af", (
+            "-i",
+            str(audio_path),
+            "-af",
+            (
                 f"loudnorm=I={target_loudness}:TP=-1.5:LRA=11:"
                 f"measured_I={measured_i}:measured_TP={measured_tp}:"
                 f"measured_LRA={measured_lra}:measured_thresh={measured_thresh}:linear=true"
             ),
-            "-c:a", "aac",
-            "-b:a", "192k",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
             str(output_path),
         ]
 
@@ -172,12 +187,18 @@ class MusicMixer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-i", str(main_audio),
-            "-i", str(music_path),
-            "-filter_complex", filter_complex,
-            "-map", "[out]",
-            "-c:a", "aac",
-            "-b:a", "256k",
+            "-i",
+            str(main_audio),
+            "-i",
+            str(music_path),
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "[out]",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "256k",
             str(output_path),
         ]
 

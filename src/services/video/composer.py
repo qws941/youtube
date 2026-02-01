@@ -100,7 +100,9 @@ class VideoComposer:
                 final_audio = main_audio
 
             if final_audio:
-                combined = self._combine_audio_video(scaled, final_audio, temp_path / "combined.mp4")
+                combined = self._combine_audio_video(
+                    scaled, final_audio, temp_path / "combined.mp4"
+                )
             else:
                 combined = scaled
 
@@ -128,12 +130,18 @@ class VideoComposer:
             cmd = [
                 self._ffmpeg,
                 "-y",
-                "-i", str(video_path),
-                "-vf", filter_str,
-                "-c:v", self.VIDEO_CODEC,
-                "-crf", str(self.CRF),
-                "-preset", self.PRESET,
-                "-c:a", "copy",
+                "-i",
+                str(video_path),
+                "-vf",
+                filter_str,
+                "-c:v",
+                self.VIDEO_CODEC,
+                "-crf",
+                str(self.CRF),
+                "-preset",
+                self.PRESET,
+                "-c:a",
+                "copy",
                 str(output_path),
             ]
 
@@ -156,12 +164,18 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-i", str(video_path),
-            "-vf", filter_str,
-            "-c:v", self.VIDEO_CODEC,
-            "-crf", str(self.CRF),
-            "-preset", self.PRESET,
-            "-c:a", "copy",
+            "-i",
+            str(video_path),
+            "-vf",
+            filter_str,
+            "-c:v",
+            self.VIDEO_CODEC,
+            "-crf",
+            str(self.CRF),
+            "-preset",
+            self.PRESET,
+            "-c:a",
+            "copy",
             str(output_path),
         ]
 
@@ -234,18 +248,24 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-i", str(visual_path),
+            "-i",
+            str(visual_path),
         ]
         if duration:
             cmd.extend(["-t", str(duration)])
 
-        cmd.extend([
-            "-c:v", self.VIDEO_CODEC,
-            "-crf", str(self.CRF),
-            "-preset", "fast",
-            "-an",
-            str(output_path),
-        ])
+        cmd.extend(
+            [
+                "-c:v",
+                self.VIDEO_CODEC,
+                "-crf",
+                str(self.CRF),
+                "-preset",
+                "fast",
+                "-an",
+                str(output_path),
+            ]
+        )
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
@@ -268,15 +288,24 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-loop", "1",
-            "-i", str(image_path),
-            "-vf", zoom_filter,
-            "-t", str(duration),
-            "-c:v", self.VIDEO_CODEC,
-            "-crf", str(self.CRF),
-            "-preset", "fast",
-            "-pix_fmt", "yuv420p",
-            "-r", str(self.OUTPUT_FPS),
+            "-loop",
+            "1",
+            "-i",
+            str(image_path),
+            "-vf",
+            zoom_filter,
+            "-t",
+            str(duration),
+            "-c:v",
+            self.VIDEO_CODEC,
+            "-crf",
+            str(self.CRF),
+            "-preset",
+            "fast",
+            "-pix_fmt",
+            "yuv420p",
+            "-r",
+            str(self.OUTPUT_FPS),
             str(output_path),
         ]
 
@@ -306,12 +335,18 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-f", "concat",
-            "-safe", "0",
-            "-i", str(concat_file),
-            "-c:v", self.VIDEO_CODEC,
-            "-crf", str(self.CRF),
-            "-preset", "fast",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat_file),
+            "-c:v",
+            self.VIDEO_CODEC,
+            "-crf",
+            str(self.CRF),
+            "-preset",
+            "fast",
             str(output_path),
         ]
 
@@ -325,13 +360,19 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-i", str(input_path),
-            "-vf", f"scale={self.OUTPUT_WIDTH}:{self.OUTPUT_HEIGHT}:force_original_aspect_ratio=decrease,"
-                   f"pad={self.OUTPUT_WIDTH}:{self.OUTPUT_HEIGHT}:(ow-iw)/2:(oh-ih)/2:black",
-            "-c:v", self.VIDEO_CODEC,
-            "-crf", str(self.CRF),
-            "-preset", "fast",
-            "-r", str(self.OUTPUT_FPS),
+            "-i",
+            str(input_path),
+            "-vf",
+            f"scale={self.OUTPUT_WIDTH}:{self.OUTPUT_HEIGHT}:force_original_aspect_ratio=decrease,"
+            f"pad={self.OUTPUT_WIDTH}:{self.OUTPUT_HEIGHT}:(ow-iw)/2:(oh-ih)/2:black",
+            "-c:v",
+            self.VIDEO_CODEC,
+            "-crf",
+            str(self.CRF),
+            "-preset",
+            "fast",
+            "-r",
+            str(self.OUTPUT_FPS),
             str(output_path),
         ]
 
@@ -363,11 +404,16 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-f", "concat",
-            "-safe", "0",
-            "-i", str(concat_file),
-            "-c:a", self.AUDIO_CODEC,
-            "-b:a", self.AUDIO_BITRATE,
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat_file),
+            "-c:a",
+            self.AUDIO_CODEC,
+            "-b:a",
+            self.AUDIO_BITRATE,
             str(output_path),
         ]
 
@@ -386,11 +432,16 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-i", str(video_path),
-            "-i", str(audio_path),
-            "-c:v", "copy",
-            "-c:a", self.AUDIO_CODEC,
-            "-b:a", self.AUDIO_BITRATE,
+            "-i",
+            str(video_path),
+            "-i",
+            str(audio_path),
+            "-c:v",
+            "copy",
+            "-c:a",
+            self.AUDIO_CODEC,
+            "-b:a",
+            self.AUDIO_BITRATE,
             "-shortest",
             str(output_path),
         ]
@@ -404,9 +455,12 @@ class VideoComposer:
     def _get_duration(self, video_path: Path) -> float:
         cmd = [
             self._ffprobe,
-            "-v", "quiet",
-            "-show_entries", "format=duration",
-            "-of", "json",
+            "-v",
+            "quiet",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "json",
             str(video_path),
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -427,14 +481,22 @@ class VideoComposer:
         cmd = [
             self._ffmpeg,
             "-y",
-            "-i", str(video_path),
-            "-t", str(max_duration),
-            "-c:v", self.VIDEO_CODEC,
-            "-crf", "28",
-            "-preset", "fast",
-            "-c:a", self.AUDIO_CODEC,
-            "-b:a", "128k",
-            "-vf", "scale=854:480",
+            "-i",
+            str(video_path),
+            "-t",
+            str(max_duration),
+            "-c:v",
+            self.VIDEO_CODEC,
+            "-crf",
+            "28",
+            "-preset",
+            "fast",
+            "-c:a",
+            self.AUDIO_CODEC,
+            "-b:a",
+            "128k",
+            "-vf",
+            "scale=854:480",
             str(output_path),
         ]
 

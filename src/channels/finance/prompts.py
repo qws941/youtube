@@ -1,21 +1,23 @@
 """Finance channel prompt templates."""
 
-FORBIDDEN_TOPICS = frozenset([
-    "get rich quick",
-    "guaranteed returns",
-    "pump and dump",
-    "gambling",
-    "casino",
-    "sports betting",
-    "forex signals",
-    "crypto pump",
-    "mlm",
-    "multi-level marketing",
-    "pyramid scheme",
-    "financial advice",  # We provide education, not personalized advice
-    "insider trading",
-    "tax evasion",
-])
+FORBIDDEN_TOPICS = frozenset(
+    [
+        "get rich quick",
+        "guaranteed returns",
+        "pump and dump",
+        "gambling",
+        "casino",
+        "sports betting",
+        "forex signals",
+        "crypto pump",
+        "mlm",
+        "multi-level marketing",
+        "pyramid scheme",
+        "financial advice",  # We provide education, not personalized advice
+        "insider trading",
+        "tax evasion",
+    ]
+)
 
 TOPIC_GENERATION = """You are a content strategist for a wealth-building educational YouTube channel.
 Generate {count} unique, viral-worthy personal finance/investing video topics.

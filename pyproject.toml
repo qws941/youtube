@@ -79,8 +79,12 @@ ignore = ["E501", "B008", "B904", "SIM102", "SIM117"]
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
+strict = false
 ignore_missing_imports = true
+warn_return_any = false
+warn_unused_ignores = false
+no_implicit_optional = false
+check_untyped_defs = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

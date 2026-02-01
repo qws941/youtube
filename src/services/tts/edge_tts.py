@@ -88,9 +88,7 @@ class EdgeTTSClient:
                 )
                 loop.run_until_complete(future)
             else:
-                asyncio.run(
-                    self._synthesize_async(text, voice, output_path, rate, volume, pitch)
-                )
+                asyncio.run(self._synthesize_async(text, voice, output_path, rate, volume, pitch))
         except Exception as e:
             raise TTSError(f"Edge TTS synthesis failed: {e}") from e
 
@@ -134,6 +132,7 @@ class EdgeTTSClient:
     def _get_audio_duration(self, path: Path) -> float:
         try:
             from mutagen.mp3 import MP3
+
             audio = MP3(path)
             return audio.info.length
         except Exception:

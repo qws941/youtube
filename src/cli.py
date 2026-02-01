@@ -1,4 +1,5 @@
 """YouTube Automation CLI - Typer 기반."""
+
 from __future__ import annotations
 
 import asyncio
@@ -250,6 +251,7 @@ def config_show():
 def version():
     """버전 확인."""
     from src import __version__
+
     console.print(f"[cyan]ytauto[/cyan] v{__version__}")
 
 
@@ -257,10 +259,13 @@ def version():
 # YouTube 인증 관리
 # =============================================================================
 
+
 @youtube_app.command("auth")
 def youtube_auth(
     force: bool = typer.Option(False, "--force", "-f", help="기존 토큰 무시하고 재인증"),
-    headless: bool = typer.Option(False, "--headless", "-H", help="브라우저 없이 수동 인증 (URL 복사 방식)"),
+    headless: bool = typer.Option(
+        False, "--headless", "-H", help="브라우저 없이 수동 인증 (URL 복사 방식)"
+    ),
 ):
     """YouTube OAuth 인증 실행."""
     from src.core.exceptions import YouTubeAuthError
@@ -272,24 +277,28 @@ def youtube_auth(
 
     # client_secrets.json 존재 확인
     if not client_secrets_path.exists():
-        console.print(Panel(
-            "[bold red]client_secrets.json 파일이 없습니다![/bold red]\n\n"
-            "YouTube 인증을 위해 Google Cloud Console에서 OAuth 자격 증명을 다운로드해야 합니다.\n\n"
-            "[bold cyan]설정 방법:[/bold cyan]\n"
-            "1. https://console.cloud.google.com/ 접속\n"
-            "2. 프로젝트 생성 또는 선택\n"
-            "3. 'API 및 서비스' → '사용자 인증 정보'\n"
-            "4. 'OAuth 2.0 클라이언트 ID' 생성 (데스크톱 앱)\n"
-            "5. JSON 다운로드 → config/client_secrets.json 으로 저장\n\n"
-            f"[dim]경로: {client_secrets_path}[/dim]",
-            title="⚠️ 설정 필요",
-            border_style="red",
-        ))
+        console.print(
+            Panel(
+                "[bold red]client_secrets.json 파일이 없습니다![/bold red]\n\n"
+                "YouTube 인증을 위해 Google Cloud Console에서 OAuth 자격 증명을 다운로드해야 합니다.\n\n"
+                "[bold cyan]설정 방법:[/bold cyan]\n"
+                "1. https://console.cloud.google.com/ 접속\n"
+                "2. 프로젝트 생성 또는 선택\n"
+                "3. 'API 및 서비스' → '사용자 인증 정보'\n"
+                "4. 'OAuth 2.0 클라이언트 ID' 생성 (데스크톱 앱)\n"
+                "5. JSON 다운로드 → config/client_secrets.json 으로 저장\n\n"
+                f"[dim]경로: {client_secrets_path}[/dim]",
+                title="⚠️ 설정 필요",
+                border_style="red",
+            )
+        )
         raise typer.Exit(1)
 
     # 기존 토큰 확인
     if token_path.exists() and not force:
-        console.print("[yellow]이미 인증되어 있습니다. 재인증하려면 --force 옵션을 사용하세요.[/yellow]")
+        console.print(
+            "[yellow]이미 인증되어 있습니다. 재인증하려면 --force 옵션을 사용하세요.[/yellow]"
+        )
         raise typer.Exit(0)
 
     # 기존 토큰 삭제 (force 모드)
@@ -297,25 +306,28 @@ def youtube_auth(
         token_path.unlink()
         console.print("[dim]기존 토큰 삭제됨[/dim]")
 
-    console.print(Panel(
-        "[bold cyan]브라우저에서 Google 로그인 창이 열립니다.[/bold cyan]\n\n"
-        "1. Google 계정으로 로그인\n"
-        "2. YouTube 채널 접근 권한 승인\n"
-        "3. 완료 후 이 창으로 돌아오세요",
-        title="🔐 YouTube 인증",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            "[bold cyan]브라우저에서 Google 로그인 창이 열립니다.[/bold cyan]\n\n"
+            "1. Google 계정으로 로그인\n"
+            "2. YouTube 채널 접근 권한 승인\n"
+            "3. 완료 후 이 창으로 돌아오세요",
+            title="🔐 YouTube 인증",
+            border_style="cyan",
+        )
+    )
 
     try:
         auth = YouTubeAuth()
         _ = auth.authenticate(headless=headless)
 
-        console.print(Panel(
-            "[bold green]✓ YouTube 인증 완료![/bold green]\n\n"
-            f"토큰 저장됨: {token_path}",
-            title="✅ 성공",
-            border_style="green",
-        ))
+        console.print(
+            Panel(
+                f"[bold green]✓ YouTube 인증 완료![/bold green]\n\n토큰 저장됨: {token_path}",
+                title="✅ 성공",
+                border_style="green",
+            )
+        )
     except YouTubeAuthError as e:
         console.print(f"[red]인증 실패: {e}[/red]")
         raise typer.Exit(1)
@@ -340,7 +352,9 @@ def youtube_status():
     if client_secrets_path.exists():
         table.add_row("client_secrets.json", "[green]✓ 있음[/green]", str(client_secrets_path))
     else:
-        table.add_row("client_secrets.json", "[red]✗ 없음[/red]", "Google Cloud Console에서 다운로드 필요")
+        table.add_row(
+            "client_secrets.json", "[red]✗ 없음[/red]", "Google Cloud Console에서 다운로드 필요"
+        )
 
     # 토큰 파일 확인
     if token_path.exists():
@@ -355,7 +369,11 @@ def youtube_status():
                     now = datetime.now(expiry.tzinfo)
                     if expiry > now:
                         remaining = expiry - now
-                        table.add_row("토큰", "[green]✓ 유효[/green]", f"만료까지 {remaining.seconds // 3600}시간 {(remaining.seconds % 3600) // 60}분")
+                        table.add_row(
+                            "토큰",
+                            "[green]✓ 유효[/green]",
+                            f"만료까지 {remaining.seconds // 3600}시간 {(remaining.seconds % 3600) // 60}분",
+                        )
                     else:
                         table.add_row("토큰", "[yellow]⚠ 만료됨[/yellow]", "자동 갱신됨")
                 except Exception:

@@ -59,7 +59,9 @@ class ImageGenerator(ImageGeneratorABC):
 
     def _enhance_prompt(self, prompt: str, channel_type: ChannelType | None) -> str:
         style = self._get_style_preset(channel_type)
-        return f"{prompt}, {style['style_suffix']}, 16:9 aspect ratio, 4K resolution, photorealistic"
+        return (
+            f"{prompt}, {style['style_suffix']}, 16:9 aspect ratio, 4K resolution, photorealistic"
+        )
 
     @retry(
         stop=stop_after_attempt(3),
@@ -185,7 +187,9 @@ class ImageGenerator(ImageGeneratorABC):
             try:
                 return await self._generate_dalle3(prompt, output_path, channel_type, **kwargs)
             except Exception as fallback_error:
-                raise ImageGenerationError(f"All providers failed. SDXL: {e}, DALL-E: {fallback_error}") from fallback_error
+                raise ImageGenerationError(
+                    f"All providers failed. SDXL: {e}, DALL-E: {fallback_error}"
+                ) from fallback_error
 
     async def generate_batch(
         self,

@@ -73,9 +73,7 @@ class YouTubeUploader(YouTubeUploaderBase):
             body["status"]["publishAt"] = self._format_scheduled_time(scheduled_at)
 
         loop = asyncio.get_event_loop()
-        video_id: str = await loop.run_in_executor(
-            _executor, self._sync_upload, video_path, body
-        )
+        video_id: str = await loop.run_in_executor(_executor, self._sync_upload, video_path, body)
 
         if thumbnail_path:
             await self.update_thumbnail(video_id, thumbnail_path)
@@ -123,7 +121,7 @@ class YouTubeUploader(YouTubeUploaderBase):
                 if retry > MAX_RETRIES:
                     raise YouTubeUploadError(f"Upload failed after {MAX_RETRIES} retries")
 
-                sleep_seconds = random.random() * (2 ** retry)
+                sleep_seconds = random.random() * (2**retry)
                 time.sleep(min(sleep_seconds, 300))
                 error = None
 
@@ -169,8 +167,12 @@ class YouTubeUploader(YouTubeUploaderBase):
     ) -> dict[str, Any]:
         if metrics is None:
             metrics = [
-                "views", "likes", "comments", "shares",
-                "estimatedMinutesWatched", "averageViewDuration",
+                "views",
+                "likes",
+                "comments",
+                "shares",
+                "estimatedMinutesWatched",
+                "averageViewDuration",
             ]
 
         loop = asyncio.get_event_loop()
@@ -181,10 +183,14 @@ class YouTubeUploader(YouTubeUploaderBase):
 
     def _sync_get_analytics(self, video_id: str, metrics: list[str]) -> dict[str, Any]:
         try:
-            channel_response = self.youtube.channels().list(
-                part="id",
-                mine=True,
-            ).execute()
+            channel_response = (
+                self.youtube.channels()
+                .list(
+                    part="id",
+                    mine=True,
+                )
+                .execute()
+            )
 
             if not channel_response.get("items"):
                 return {"video_id": video_id, "error": "No channel found"}
@@ -193,13 +199,17 @@ class YouTubeUploader(YouTubeUploaderBase):
             end_date = datetime.now(UTC).strftime("%Y-%m-%d")
             start_date = "2020-01-01"
 
-            response = self.analytics.reports().query(
-                ids=f"channel=={channel_id}",
-                startDate=start_date,
-                endDate=end_date,
-                metrics=",".join(metrics),
-                filters=f"video=={video_id}",
-            ).execute()
+            response = (
+                self.analytics.reports()
+                .query(
+                    ids=f"channel=={channel_id}",
+                    startDate=start_date,
+                    endDate=end_date,
+                    metrics=",".join(metrics),
+                    filters=f"video=={video_id}",
+                )
+                .execute()
+            )
 
             result: dict[str, Any] = {"video_id": video_id}
             if response.get("rows") and response.get("columnHeaders"):
@@ -224,10 +234,14 @@ class YouTubeUploader(YouTubeUploaderBase):
 
     def _sync_get_video_details(self, video_id: str) -> dict[str, Any]:
         try:
-            response = self.youtube.videos().list(
-                part="snippet,statistics,status",
-                id=video_id,
-            ).execute()
+            response = (
+                self.youtube.videos()
+                .list(
+                    part="snippet,statistics,status",
+                    id=video_id,
+                )
+                .execute()
+            )
 
             if not response.get("items"):
                 return {}
@@ -277,10 +291,14 @@ class YouTubeUploader(YouTubeUploaderBase):
         category_id: str | None,
     ) -> bool:
         try:
-            current = self.youtube.videos().list(
-                part="snippet",
-                id=video_id,
-            ).execute()
+            current = (
+                self.youtube.videos()
+                .list(
+                    part="snippet",
+                    id=video_id,
+                )
+                .execute()
+            )
 
             if not current.get("items"):
                 return False
@@ -307,9 +325,7 @@ class YouTubeUploader(YouTubeUploaderBase):
 
     async def delete_video(self, video_id: str) -> bool:
         loop = asyncio.get_event_loop()
-        result: bool = await loop.run_in_executor(
-            _executor, self._sync_delete_video, video_id
-        )
+        result: bool = await loop.run_in_executor(_executor, self._sync_delete_video, video_id)
         return result
 
     def _sync_delete_video(self, video_id: str) -> bool:

@@ -58,12 +58,14 @@ class SubtitleGenerator:
     ) -> Path:
         entries = []
         for i, seg in enumerate(segments, 1):
-            entries.append(SubtitleEntry(
-                index=i,
-                start_time=seg["start"],
-                end_time=seg["end"],
-                text=self._wrap_text(seg["text"]),
-            ))
+            entries.append(
+                SubtitleEntry(
+                    index=i,
+                    start_time=seg["start"],
+                    end_time=seg["end"],
+                    text=self._wrap_text(seg["text"]),
+                )
+            )
         srt_content = self._entries_to_srt(entries)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(srt_content, encoding="utf-8")
@@ -110,12 +112,14 @@ class SubtitleGenerator:
             duration = self._calculate_duration(sentence)
             wrapped = self._wrap_text(sentence)
 
-            entries.append(SubtitleEntry(
-                index=index,
-                start_time=current_time,
-                end_time=current_time + duration,
-                text=wrapped,
-            ))
+            entries.append(
+                SubtitleEntry(
+                    index=index,
+                    start_time=current_time,
+                    end_time=current_time + duration,
+                    text=wrapped,
+                )
+            )
 
             current_time += duration
             index += 1
@@ -177,7 +181,7 @@ class SubtitleGenerator:
                 if current_line:
                     lines.append(" ".join(current_line))
                     if len(lines) >= self.MAX_LINES:
-                        remaining = words[words.index(word):]
+                        remaining = words[words.index(word) :]
                         lines[-1] += " " + " ".join(remaining)
                         break
                     current_line = [word]
@@ -193,7 +197,7 @@ class SubtitleGenerator:
         if current_line and len(lines) < self.MAX_LINES:
             lines.append(" ".join(current_line))
 
-        return "\n".join(lines[:self.MAX_LINES])
+        return "\n".join(lines[: self.MAX_LINES])
 
     def _entries_to_srt(self, entries: list[SubtitleEntry]) -> str:
         return "\n".join(entry.to_srt() for entry in entries)

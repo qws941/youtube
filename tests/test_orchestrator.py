@@ -17,7 +17,6 @@ from src.core.orchestrator import (
 
 
 class TestJobRecord:
-
     def test_job_record_creation(self):
         job = JobRecord(
             job_id="test-001",
@@ -42,7 +41,6 @@ class TestJobRecord:
 
 
 class TestOrchestratorState:
-
     def test_state_values(self):
         assert OrchestratorState.STOPPED.value == "stopped"
         assert OrchestratorState.RUNNING.value == "running"
@@ -50,7 +48,6 @@ class TestOrchestratorState:
 
 
 class TestOrchestratorInit:
-
     def test_default_init(self):
         orch = Orchestrator()
 
@@ -83,7 +80,6 @@ class TestOrchestratorInit:
 
 
 class TestSingleton:
-
     def test_get_orchestrator_returns_same_instance(self):
         reset_orchestrator()
 
@@ -103,7 +99,6 @@ class TestSingleton:
 
 
 class TestEnqueue:
-
     @pytest.mark.asyncio
     async def test_enqueue_creates_job(self, orchestrator_dry_run: Orchestrator):
         job_id = await orchestrator_dry_run.enqueue("horror")
@@ -135,7 +130,6 @@ class TestEnqueue:
 
 
 class TestJobProcessing:
-
     @pytest.mark.asyncio
     async def test_process_job_dry_run(self, orchestrator_dry_run: Orchestrator):
         job = JobRecord(
@@ -152,9 +146,7 @@ class TestJobProcessing:
         assert job.result == {"dry_run": True, "channel": "horror"}
 
     @pytest.mark.asyncio
-    async def test_process_job_with_pipeline(
-        self, orchestrator_with_mock_pipeline: Orchestrator
-    ):
+    async def test_process_job_with_pipeline(self, orchestrator_with_mock_pipeline: Orchestrator):
         orchestrator_with_mock_pipeline.dry_run = False
 
         job = JobRecord(
@@ -169,9 +161,7 @@ class TestJobProcessing:
         assert job.result == {"status": "completed"}
 
     @pytest.mark.asyncio
-    async def test_process_job_failure_triggers_retry(
-        self, orchestrator_dry_run: Orchestrator
-    ):
+    async def test_process_job_failure_triggers_retry(self, orchestrator_dry_run: Orchestrator):
         orchestrator_dry_run.dry_run = False
 
         failing_pipeline = MagicMock()
@@ -215,7 +205,6 @@ class TestJobProcessing:
 
 
 class TestSemaphoreConcurrency:
-
     @pytest.mark.asyncio
     async def test_semaphore_limits_concurrency(self):
         orch = Orchestrator(max_concurrent=2, dry_run=True)
@@ -241,11 +230,8 @@ class TestSemaphoreConcurrency:
 
 
 class TestRunOnce:
-
     @pytest.mark.asyncio
-    async def test_run_once_executes_immediately(
-        self, orchestrator_dry_run: Orchestrator
-    ):
+    async def test_run_once_executes_immediately(self, orchestrator_dry_run: Orchestrator):
         job_id = await orchestrator_dry_run.run_once("horror")
 
         job = orchestrator_dry_run.get_job(job_id)
@@ -254,11 +240,8 @@ class TestRunOnce:
 
 
 class TestStatus:
-
     @pytest.mark.asyncio
-    async def test_status_returns_correct_info(
-        self, orchestrator_dry_run: Orchestrator
-    ):
+    async def test_status_returns_correct_info(self, orchestrator_dry_run: Orchestrator):
         await orchestrator_dry_run.enqueue("horror")
         await orchestrator_dry_run.enqueue("facts")
 
@@ -273,7 +256,6 @@ class TestStatus:
 
 
 class TestGetJobs:
-
     @pytest.mark.asyncio
     async def test_get_job_returns_job(self, orchestrator_dry_run: Orchestrator):
         job_id = await orchestrator_dry_run.enqueue("horror")
@@ -283,9 +265,7 @@ class TestGetJobs:
         assert job is not None
         assert job.job_id == job_id
 
-    def test_get_job_returns_none_for_unknown(
-        self, orchestrator_dry_run: Orchestrator
-    ):
+    def test_get_job_returns_none_for_unknown(self, orchestrator_dry_run: Orchestrator):
         job = orchestrator_dry_run.get_job("nonexistent")
         assert job is None
 
@@ -300,7 +280,6 @@ class TestGetJobs:
 
 
 class TestStartStop:
-
     @pytest.mark.asyncio
     async def test_start_creates_workers(self, orchestrator_dry_run: Orchestrator):
         await orchestrator_dry_run.start()
@@ -333,15 +312,12 @@ class TestStartStop:
             await orchestrator_dry_run.stop()
 
     @pytest.mark.asyncio
-    async def test_stop_when_not_running_is_noop(
-        self, orchestrator_dry_run: Orchestrator
-    ):
+    async def test_stop_when_not_running_is_noop(self, orchestrator_dry_run: Orchestrator):
         await orchestrator_dry_run.stop()
         assert orchestrator_dry_run._state == OrchestratorState.STOPPED
 
 
 class TestPipelineRegistration:
-
     def test_register_pipeline(self, orchestrator_dry_run: Orchestrator):
         mock_pipeline = MagicMock()
 
@@ -350,9 +326,7 @@ class TestPipelineRegistration:
         assert "horror" in orchestrator_dry_run._pipelines
         assert orchestrator_dry_run._pipelines["horror"] is mock_pipeline
 
-    def test_get_pipeline_returns_registered(
-        self, orchestrator_dry_run: Orchestrator
-    ):
+    def test_get_pipeline_returns_registered(self, orchestrator_dry_run: Orchestrator):
         mock_pipeline = MagicMock()
         orchestrator_dry_run.register_pipeline("horror", mock_pipeline)
 
@@ -371,11 +345,8 @@ class TestPipelineRegistration:
 
 
 class TestWorkerLoop:
-
     @pytest.mark.asyncio
-    async def test_worker_processes_queued_jobs(
-        self, orchestrator_dry_run: Orchestrator
-    ):
+    async def test_worker_processes_queued_jobs(self, orchestrator_dry_run: Orchestrator):
         await orchestrator_dry_run.start()
 
         try:

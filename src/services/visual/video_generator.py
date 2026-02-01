@@ -27,12 +27,20 @@ CHANNEL_MOTION_PRESETS: dict[ChannelType, dict[str, Any]] = {
         "speed": 0.8,
     },
     ChannelType.FACTS: {
-        "motion_prompts": ["smooth professional pan", "clean zoom transition", "educational reveal"],
+        "motion_prompts": [
+            "smooth professional pan",
+            "clean zoom transition",
+            "educational reveal",
+        ],
         "default_effect": "pan_right",
         "speed": 1.0,
     },
     ChannelType.FINANCE: {
-        "motion_prompts": ["corporate camera movement", "professional zoom", "business-like transition"],
+        "motion_prompts": [
+            "corporate camera movement",
+            "professional zoom",
+            "business-like transition",
+        ],
         "default_effect": "zoom_out",
         "speed": 0.9,
     },
@@ -130,7 +138,9 @@ class VideoGenerator(VideoGeneratorABC):
                     },
                 )
             elif status_data["status"] == "FAILED":
-                raise VideoGenerationError(f"Runway Gen-3 failed: {status_data.get('failure', 'Unknown error')}")
+                raise VideoGenerationError(
+                    f"Runway Gen-3 failed: {status_data.get('failure', 'Unknown error')}"
+                )
 
         raise VideoGenerationError("Runway Gen-3 timed out")
 
@@ -149,12 +159,12 @@ class VideoGenerator(VideoGeneratorABC):
         dur_int = int(duration)
 
         zoom_effects = {
-            "zoom_in": f"scale=8000:-1,zoompan=z='min(zoom+0.001,1.5)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={fps*dur_int}:s={width}x{height}:fps={fps}",
-            "zoom_out": f"scale=8000:-1,zoompan=z='if(lte(zoom,1.0),1.5,max(1.001,zoom-0.001))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={fps*dur_int}:s={width}x{height}:fps={fps}",
-            "pan_left": f"scale=8000:-1,zoompan=z='1.2':x='iw/2-(iw/zoom/2)+((iw/zoom/2)*({fps*dur_int}-on)/{fps*dur_int})':y='ih/2-(ih/zoom/2)':d={fps*dur_int}:s={width}x{height}:fps={fps}",
-            "pan_right": f"scale=8000:-1,zoompan=z='1.2':x='(iw/zoom/2)+(iw/zoom/2)*on/{fps*dur_int}':y='ih/2-(ih/zoom/2)':d={fps*dur_int}:s={width}x{height}:fps={fps}",
-            "pan_up": f"scale=8000:-1,zoompan=z='1.2':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)+((ih/zoom/2)*({fps*dur_int}-on)/{fps*dur_int})':d={fps*dur_int}:s={width}x{height}:fps={fps}",
-            "pan_down": f"scale=8000:-1,zoompan=z='1.2':x='iw/2-(iw/zoom/2)':y='(ih/zoom/2)+(ih/zoom/2)*on/{fps*dur_int}':d={fps*dur_int}:s={width}x{height}:fps={fps}",
+            "zoom_in": f"scale=8000:-1,zoompan=z='min(zoom+0.001,1.5)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={fps * dur_int}:s={width}x{height}:fps={fps}",
+            "zoom_out": f"scale=8000:-1,zoompan=z='if(lte(zoom,1.0),1.5,max(1.001,zoom-0.001))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={fps * dur_int}:s={width}x{height}:fps={fps}",
+            "pan_left": f"scale=8000:-1,zoompan=z='1.2':x='iw/2-(iw/zoom/2)+((iw/zoom/2)*({fps * dur_int}-on)/{fps * dur_int})':y='ih/2-(ih/zoom/2)':d={fps * dur_int}:s={width}x{height}:fps={fps}",
+            "pan_right": f"scale=8000:-1,zoompan=z='1.2':x='(iw/zoom/2)+(iw/zoom/2)*on/{fps * dur_int}':y='ih/2-(ih/zoom/2)':d={fps * dur_int}:s={width}x{height}:fps={fps}",
+            "pan_up": f"scale=8000:-1,zoompan=z='1.2':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)+((ih/zoom/2)*({fps * dur_int}-on)/{fps * dur_int})':d={fps * dur_int}:s={width}x{height}:fps={fps}",
+            "pan_down": f"scale=8000:-1,zoompan=z='1.2':x='iw/2-(iw/zoom/2)':y='(ih/zoom/2)+(ih/zoom/2)*on/{fps * dur_int}':d={fps * dur_int}:s={width}x{height}:fps={fps}",
         }
 
         filter_complex = zoom_effects.get(effect, zoom_effects["zoom_in"])
@@ -164,15 +174,24 @@ class VideoGenerator(VideoGeneratorABC):
         cmd = [
             ffmpeg,
             "-y",
-            "-loop", "1",
-            "-i", str(image_path),
-            "-vf", filter_complex,
-            "-t", str(dur_int),
-            "-c:v", "libx264",
-            "-preset", "medium",
-            "-crf", "18",
-            "-pix_fmt", "yuv420p",
-            "-movflags", "+faststart",
+            "-loop",
+            "1",
+            "-i",
+            str(image_path),
+            "-vf",
+            filter_complex,
+            "-t",
+            str(dur_int),
+            "-c:v",
+            "libx264",
+            "-preset",
+            "medium",
+            "-crf",
+            "18",
+            "-pix_fmt",
+            "yuv420p",
+            "-movflags",
+            "+faststart",
             str(output_path),
         ]
 
@@ -284,11 +303,16 @@ class VideoGenerator(VideoGeneratorABC):
             cmd = [
                 ffmpeg,
                 "-y",
-                "-f", "concat",
-                "-safe", "0",
-                "-i", str(concat_file),
-                "-c", "copy",
-                "-movflags", "+faststart",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(concat_file),
+                "-c",
+                "copy",
+                "-movflags",
+                "+faststart",
                 str(output_path),
             ]
 
@@ -302,9 +326,7 @@ class VideoGenerator(VideoGeneratorABC):
             if process.returncode != 0:
                 raise VideoGenerationError(f"FFmpeg concat failed: {stderr.decode()}")
 
-            total_duration = sum(
-                self._get_video_duration(Path(p)) for p in video_paths
-            )
+            total_duration = sum(self._get_video_duration(Path(p)) for p in video_paths)
 
             return VisualAsset(
                 asset_type="video",
@@ -329,9 +351,12 @@ class VideoGenerator(VideoGeneratorABC):
         result = subprocess.run(
             [
                 ffprobe,
-                "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "json",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "json",
                 str(video_path),
             ],
             capture_output=True,
