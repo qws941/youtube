@@ -1,0 +1,92 @@
+# ============================================
+# YouTube Automation System - Docker Compose
+# ============================================
+version: "3.9"
+
+services:
+  # ============================================
+  # Scheduler Service (Main)
+  # ============================================
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: ytauto-scheduler
+    restart: unless-stopped
+    command: ["schedule", "start", "--daemon"]
+    env_file:
+      - .env
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - DRY_RUN=${DRY_RUN:-false}
+    volumes:
+      # Persist output videos
+      - ./data/output:/app/data/output
+      # Persist assets (music, fonts)
+      - ./data/assets:/app/data/assets
+      # Persist templates
+      - ./data/templates:/app/data/templates
+      # OAuth tokens (read-only after initial auth)
+      - ./config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # One-off Video Generation
+  # ============================================
+  generate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: ytauto-generate
+    profiles: ["generate"]
+    command: ["run", "--channel", "${CHANNEL:-horror}", "--count", "${COUNT:-1}"]
+    env_file:
+      - .env
+    environment:
+      - DRY_RUN=${DRY_RUN:-false}
+    volumes:
+      - ./data/output:/app/data/output
+      - ./data/assets:/app/data/assets
+      - ./data/templates:/app/data/templates
+      - ./config:/app/config:ro
+
+  # ============================================
+  # YouTube OAuth Setup (Interactive)
+  # ============================================
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: ytauto-auth
+    profiles: ["auth"]
+    command: ["youtube", "auth"]
+    env_file:
+      - .env
+    volumes:
+      # Writable for token storage
+      - ./config:/app/config
+    stdin_open: true
+    tty: true
+
+# ============================================
+# Volumes (optional: for production persistence)
+# ============================================
+volumes:
+  output_data:
+    driver: local
+  assets_data:
+    driver: local

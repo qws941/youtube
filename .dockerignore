@@ -1,0 +1,70 @@
+# ============================================
+# Docker Ignore - YouTube Automation
+# ============================================
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+ENV
+env
+.eggs
+*.egg-info
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist
+build
+*.egg
+
+# Data (will be mounted as volumes)
+data/output/*
+!data/output/.gitkeep
+
+# Secrets
+config/*.json
+*.pem
+*.key
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Tests
+tests/
+*_test.py
+test_*.py
+conftest.py

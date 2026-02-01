@@ -1,0 +1,480 @@
+{
+  "name": "YouTube Horror Channel",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * 1,3,5"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule (Mon/Wed/Fri 6PM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a horror content creator. Generate a unique, engaging horror topic for a YouTube video. The topic should be mysterious, creepy, and appeal to horror enthusiasts. Avoid gore or extreme content. Return ONLY the topic title, nothing else.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate a horror video topic. Previous topics to avoid: {{ $json.previousTopics || 'none' }}\"\n    }\n  ],\n  \"temperature\": 0.9,\n  \"max_tokens\": 100\n}"
+      },
+      "id": "generate-topic",
+      "name": "Generate Topic (LLM)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-cred",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst topic = response.choices[0].message.content.trim();\n\nreturn {\n  topic: topic,\n  channel: 'horror',\n  targetDuration: 600,\n  wordCount: 1500,\n  style: 'dark, suspenseful, atmospheric'\n};"
+      },
+      "id": "parse-topic",
+      "name": "Parse Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a professional horror YouTube scriptwriter. Write engaging, atmospheric scripts that keep viewers hooked. Include:\\n- Hook (first 30 seconds)\\n- Main content with 5-7 scenes\\n- Call to action\\n\\nReturn JSON format:\\n{\\n  \\\"title\\\": \\\"YouTube title (max 100 chars)\\\",\\n  \\\"description\\\": \\\"YouTube description\\\",\\n  \\\"tags\\\": [\\\"tag1\\\", \\\"tag2\\\"],\\n  \\\"scenes\\\": [\\n    {\\n      \\\"narration\\\": \\\"Scene narration text\\\",\\n      \\\"visualPrompt\\\": \\\"Image generation prompt\\\",\\n      \\\"duration\\\": 60\\n    }\\n  ]\\n}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a horror script about: {{ $json.topic }}\\nTarget duration: {{ $json.targetDuration }} seconds\\nWord count: approximately {{ $json.wordCount }} words\\nStyle: {{ $json.style }}\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4000,\n  \"response_format\": { \"type\": \"json_object\" }\n}"
+      },
+      "id": "generate-script",
+      "name": "Generate Script (LLM)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-cred",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst scriptJson = JSON.parse(response.choices[0].message.content);\n\n// Validation\nif (scriptJson.title.length > 100) {\n  throw new Error('Title exceeds 100 characters');\n}\n\nconst totalWords = scriptJson.scenes.reduce((sum, scene) => \n  sum + scene.narration.split(' ').length, 0);\n\nif (totalWords < 500) {\n  throw new Error('Script too short: ' + totalWords + ' words');\n}\n\nreturn {\n  ...scriptJson,\n  wordCount: totalWords,\n  sceneCount: scriptJson.scenes.length,\n  topic: $('Parse Topic').first().json.topic\n};"
+      },
+      "id": "validate-script",
+      "name": "Validate Script",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const script = $input.first().json;\nconst fullNarration = script.scenes.map(s => s.narration).join(' ');\n\nreturn {\n  text: fullNarration,\n  script: script\n};"
+      },
+      "id": "prepare-tts",
+      "name": "Prepare TTS Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/pNInz6obpgDQGcFmaJgB",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "elevenLabsApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.text }}\",\n  \"model_id\": \"eleven_multilingual_v2\",\n  \"voice_settings\": {\n    \"stability\": 0.5,\n    \"similarity_boost\": 0.75,\n    \"style\": 0.3\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "generate-tts",
+      "name": "Generate TTS (ElevenLabs)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 0],
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "elevenlabs-cred",
+          "name": "ElevenLabs API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "youtube-assets",
+        "fileName": "={{ $('Validate Script').first().json.title.replace(/[^a-zA-Z0-9]/g, '_') }}_audio.mp3"
+      },
+      "id": "save-audio",
+      "name": "Save Audio to MinIO",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [1540, 0],
+      "credentials": {
+        "s3": {
+          "id": "minio-cred",
+          "name": "MinIO S3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const script = $('Validate Script').first().json;\n\nreturn script.scenes.map((scene, index) => ({\n  sceneIndex: index,\n  visualPrompt: scene.visualPrompt,\n  duration: scene.duration,\n  title: script.title\n}));"
+      },
+      "id": "split-scenes",
+      "name": "Split Scenes for Images",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "replicateApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b\",\n  \"input\": {\n    \"prompt\": \"{{ $json.visualPrompt }}, cinematic horror atmosphere, dark moody lighting, 8k quality, photorealistic\",\n    \"negative_prompt\": \"text, watermark, low quality, blurry, cartoon, anime\",\n    \"width\": 1920,\n    \"height\": 1080,\n    \"num_outputs\": 1\n  }\n}"
+      },
+      "id": "generate-images",
+      "name": "Generate Images (SDXL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 200],
+      "credentials": {
+        "replicateApi": {
+          "id": "replicate-cred",
+          "name": "Replicate API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Wait for Replicate prediction to complete\nconst predictionId = $input.first().json.id;\nconst maxWait = 120000;\nconst interval = 5000;\nlet elapsed = 0;\n\nwhile (elapsed < maxWait) {\n  const response = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `https://api.replicate.com/v1/predictions/${predictionId}`,\n    headers: {\n      'Authorization': `Token ${$credentials.replicateApi.apiToken}`\n    }\n  });\n  \n  if (response.status === 'succeeded') {\n    return {\n      imageUrl: response.output[0],\n      sceneIndex: $json.sceneIndex,\n      duration: $json.duration\n    };\n  }\n  \n  if (response.status === 'failed') {\n    throw new Error('Image generation failed');\n  }\n  \n  await new Promise(r => setTimeout(r, interval));\n  elapsed += interval;\n}\n\nthrow new Error('Image generation timeout');",
+        "workflowMode": "each"
+      },
+      "id": "wait-images",
+      "name": "Wait for Images",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.50.200:8080/api/compose",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"audioUrl\": \"{{ $('Save Audio to MinIO').first().json.url }}\",\n  \"scenes\": {{ JSON.stringify($('Wait for Images').all().map(item => item.json)) }},\n  \"outputFormat\": \"mp4\",\n  \"resolution\": \"1920x1080\",\n  \"fps\": 30,\n  \"transitions\": \"crossfade\"\n}"
+      },
+      "id": "compose-video",
+      "name": "Compose Video (FFmpeg Worker)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"dall-e-3\",\n  \"prompt\": \"YouTube thumbnail for horror video titled '{{ $('Validate Script').first().json.title }}'. Dramatic, eye-catching, dark atmosphere, bold text space, 16:9 aspect ratio, professional quality\",\n  \"size\": \"1792x1024\",\n  \"quality\": \"hd\",\n  \"n\": 1\n}"
+      },
+      "id": "generate-thumbnail",
+      "name": "Generate Thumbnail (DALL-E 3)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, -100],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-cred",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Validate Script').first().json.title }}",
+        "description": "={{ $('Validate Script').first().json.description }}",
+        "categoryId": "24",
+        "options": {
+          "tags": "={{ $('Validate Script').first().json.tags.join(',') }}",
+          "privacyStatus": "public",
+          "madeForKids": false
+        }
+      },
+      "id": "upload-youtube",
+      "name": "Upload to YouTube",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [1980, 100],
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "youtube-cred",
+          "name": "YouTube OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "videos",
+        "columns": "channel, title, topic, youtube_id, status, created_at",
+        "values": "horror, {{ $('Validate Script').first().json.title }}, {{ $('Validate Script').first().json.topic }}, {{ $json.id }}, published, {{ new Date().toISOString() }}"
+      },
+      "id": "save-to-db",
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [2200, 100],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "#youtube-automation",
+        "text": "=:movie_camera: *New Horror Video Published!*\n\n*Title:* {{ $('Validate Script').first().json.title }}\n*Topic:* {{ $('Validate Script').first().json.topic }}\n*YouTube:* https://youtube.com/watch?v={{ $('Upload to YouTube').first().json.id }}\n\n:chart_with_upwards_trend: Word Count: {{ $('Validate Script').first().json.wordCount }}\n:film_frames: Scenes: {{ $('Validate Script').first().json.sceneCount }}"
+      },
+      "id": "notify-slack",
+      "name": "Notify Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [2200, -100],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-cred",
+          "name": "Slack API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule (Mon/Wed/Fri 6PM)": {
+      "main": [
+        [
+          {
+            "node": "Generate Topic (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Topic (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Parse Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Topic": {
+      "main": [
+        [
+          {
+            "node": "Generate Script (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Script (LLM)": {
+      "main": [
+        [
+          {
+            "node": "Validate Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Script": {
+      "main": [
+        [
+          {
+            "node": "Prepare TTS Text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Scenes for Images",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Thumbnail (DALL-E 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare TTS Text": {
+      "main": [
+        [
+          {
+            "node": "Generate TTS (ElevenLabs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate TTS (ElevenLabs)": {
+      "main": [
+        [
+          {
+            "node": "Save Audio to MinIO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Scenes for Images": {
+      "main": [
+        [
+          {
+            "node": "Generate Images (SDXL)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Images (SDXL)": {
+      "main": [
+        [
+          {
+            "node": "Wait for Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Audio to MinIO": {
+      "main": [
+        [
+          {
+            "node": "Compose Video (FFmpeg Worker)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Images": {
+      "main": [
+        [
+          {
+            "node": "Compose Video (FFmpeg Worker)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose Video (FFmpeg Worker)": {
+      "main": [
+        [
+          {
+            "node": "Upload to YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Thumbnail (DALL-E 3)": {
+      "main": [
+        [
+          {
+            "node": "Upload to YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to YouTube": {
+      "main": [
+        [
+          {
+            "node": "Save to Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["youtube", "horror", "automation"],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-28T00:00:00.000Z",
+  "versionId": "1"
+}
