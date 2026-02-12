@@ -30,7 +30,7 @@ class VideoComposer:
 
     def __init__(self) -> None:
         settings = get_settings()
-        self.output_dir = Path(settings.output_dir)
+        self.output_dir = Path(settings.paths.output_dir)
         self.temp_dir = Path(getattr(settings, "temp_dir", "/tmp"))
         self._ffmpeg = shutil.which("ffmpeg")
         self._ffprobe = shutil.which("ffprobe")
@@ -40,6 +40,8 @@ class VideoComposer:
 
         if not self._ffmpeg:
             raise VideoCompositionError("ffmpeg not found in PATH")
+        if not self._ffprobe:
+            raise VideoCompositionError("ffprobe not found in PATH")
 
     async def compose(self, project: Any, output_path: Path) -> Path:
         loop = asyncio.get_event_loop()

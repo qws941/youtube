@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import re
 import uuid
@@ -8,6 +9,7 @@ from typing import Any, Literal, cast
 
 from config import get_settings
 from src.core.exceptions import TTSError, TTSQuotaExceededError
+from src.core.interfaces import TTSEngine
 from src.core.models import AudioSegment, ChannelType, Script
 from src.services.tts.edge_tts import EdgeTTSClient
 from src.services.tts.elevenlabs import ElevenLabsClient
@@ -41,7 +43,7 @@ CHANNEL_VOICE_MAP: dict[ChannelType, dict[str, str]] = {
 }
 
 
-class TTSEngineImpl:
+class TTSEngineImpl(TTSEngine):
     def __init__(
         self,
         prefer_provider: Provider = "elevenlabs",
@@ -67,7 +69,7 @@ class TTSEngineImpl:
 
         self._edge = EdgeTTSClient()
 
-    def synthesize(
+    def _synthesize_sync(
         self,
         text: str,
         voice_id: str | None = None,
@@ -106,7 +108,7 @@ class TTSEngineImpl:
 
         raise TTSError("No TTS provider available")
 
-    def synthesize_with_emotions(
+    def _synthesize_with_emotions_sync(
         self,
         text: str,
         voice_id: str | None = None,
@@ -116,7 +118,7 @@ class TTSEngineImpl:
         segments = self._parse_emotion_markers(text)
 
         if len(segments) == 1 and segments[0][0] == "neutral":
-            return self.synthesize(segments[0][1], voice_id, output_path, channel_type)
+            return self._synthesize_sync(segments[0][1], voice_id, output_path, channel_type)
 
         if output_path is None:
             output_path = self._output_dir / f"{uuid.uuid4().hex}.mp3"
@@ -254,7 +256,7 @@ class TTSEngineImpl:
         voice_map = CHANNEL_VOICE_MAP.get(channel_type, CHANNEL_VOICE_MAP[ChannelType.FACTS])
         return voice_map[provider]
 
-    def get_available_voices(self, provider: Provider | None = None) -> dict[str, Any]:
+    def _get_available_voices_sync(self, provider: Provider | None = None) -> dict[str, Any]:
         result: dict[str, Any] = {}
 
         target_provider = provider or self._prefer_provider
@@ -294,7 +296,7 @@ class TTSEngineImpl:
             if not text:
                 continue
 
-            segment = self.synthesize_with_emotions(
+            segment = self._synthesize_with_emotions_sync(
                 text,
                 channel_type=script_channel,
                 output_path=output_path,
@@ -305,6 +307,40 @@ class TTSEngineImpl:
             segments.append(segment)
 
         return segments
+
+    # ---- ABC-compliant async interface ----
+
+    async def synthesize(
+        self,
+        text: str,
+        voice_id: str,
+        output_path: Path,
+    ) -> AudioSegment:
+        """Async wrapper around sync synthesize (ABC contract)."""
+        return await asyncio.to_thread(
+            self._synthesize_sync,
+            text,
+            voice_id,
+            output_path,
+        )
+
+    async def synthesize_with_emotions(
+        self,
+        script: Script,
+        voice_id: str,
+        output_dir: Path,
+    ) -> list[AudioSegment]:
+        """Async wrapper that delegates to synthesize_script (ABC contract)."""
+        return await asyncio.to_thread(
+            self.synthesize_script,
+            script,
+            output_dir,
+        )
+
+    async def get_available_voices(self) -> list[dict]:
+        """Async wrapper around sync get_available_voices (ABC contract)."""
+        result = await asyncio.to_thread(self._get_available_voices_sync)
+        return [{"provider": k, "voices": v} for k, v in result.items()]
 
     def close(self) -> None:
         if self._elevenlabs:

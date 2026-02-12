@@ -9,17 +9,22 @@ import sys
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import schedule
-import structlog
 
-if TYPE_CHECKING:
-    pass
+try:
+    import structlog
 
-logger = structlog.get_logger(__name__)
+    logger = structlog.get_logger(__name__)
+except ImportError:
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+from src.core.models import ChannelType
 
 
 class JobStatus(Enum):
@@ -35,7 +40,7 @@ class JobRecord:
     job_id: str
     channel: str
     status: JobStatus
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     started_at: datetime | None = None
     completed_at: datetime | None = None
     error: str | None = None
@@ -79,17 +84,6 @@ class Orchestrator:
         self._scheduler_task: asyncio.Task | None = None
         self._pipelines: dict[str, Any] = {}
 
-        self._setup_signal_handlers()
-
-    def _setup_signal_handlers(self):
-        if sys.platform != "win32":
-            for sig in (signal.SIGTERM, signal.SIGINT):
-                signal.signal(sig, self._signal_handler)
-
-    def _signal_handler(self, signum, frame):
-        logger.info("signal_received", signal=signum)
-        asyncio.create_task(self.stop())
-
     def register_pipeline(self, channel: str, pipeline: Any):
         self._pipelines[channel] = pipeline
         logger.info("pipeline_registered", channel=channel)
@@ -128,7 +122,7 @@ class Orchestrator:
     async def _process_job(self, job: JobRecord):
         async with self._semaphore:
             job.status = JobStatus.RUNNING
-            job.started_at = datetime.now()
+            job.started_at = datetime.now(timezone.utc)
             logger.info("job_started", job_id=job.job_id, channel=job.channel)
 
             try:
@@ -138,7 +132,7 @@ class Orchestrator:
                     await self._execute_job(job)
 
                 job.status = JobStatus.COMPLETED
-                job.completed_at = datetime.now()
+                job.completed_at = datetime.now(timezone.utc)
                 self._stats[job.channel]["completed"] += 1
                 logger.info(
                     "job_completed",
@@ -153,7 +147,7 @@ class Orchestrator:
         pipeline = self._get_pipeline(job.channel)
         if not pipeline:
             raise ValueError(f"No pipeline for channel: {job.channel}")
-        job.result = await pipeline.run()
+        job.result = await pipeline.run(ChannelType(job.channel))
 
     async def _simulate_job(self, job: JobRecord):
         logger.info("dry_run_simulation", job_id=job.job_id, channel=job.channel)
@@ -171,7 +165,7 @@ class Orchestrator:
             await self._queue.put(job)
         else:
             job.status = JobStatus.FAILED
-            job.completed_at = datetime.now()
+            job.completed_at = datetime.now(timezone.utc)
             self._stats[job.channel]["failed"] += 1
 
     async def _worker(self, worker_id: int):
@@ -212,6 +206,12 @@ class Orchestrator:
         logger.info(
             "orchestrator_starting", max_concurrent=self.max_concurrent, dry_run=self.dry_run
         )
+
+        # Setup signal handlers within the running event loop
+        if sys.platform != "win32":
+            loop = asyncio.get_running_loop()
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                loop.add_signal_handler(sig, lambda: asyncio.create_task(self.stop()))
 
         self._workers = [asyncio.create_task(self._worker(i)) for i in range(self.max_concurrent)]
         self._setup_schedules(schedules)

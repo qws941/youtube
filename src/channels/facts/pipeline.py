@@ -6,7 +6,7 @@ import json
 import re
 import uuid
 from collections.abc import AsyncIterator
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
@@ -76,7 +76,7 @@ class FactsPipeline(ContentPipeline):
         self.output_base = output_base or Path("data/output")
         self._llm_client = llm_client
 
-    async def run(self, channel: str) -> VideoProject:
+    async def run(self, channel: ChannelType) -> VideoProject:
         """Run single video generation pipeline."""
         project_id = uuid.uuid4()
         topic = await self._generate_topic()
@@ -112,7 +112,7 @@ class FactsPipeline(ContentPipeline):
 
         return project
 
-    async def run_batch(self, channel: str, count: int) -> AsyncIterator[VideoProject]:
+    async def run_batch(self, channel: ChannelType, count: int) -> AsyncIterator[VideoProject]:
         """Run batch video generation."""
         topics = await self._generate_topics_batch(count)
         for topic in topics:
@@ -338,7 +338,7 @@ class FactsPipeline(ContentPipeline):
         topic: dict[str, Any],
     ) -> None:
         offset_hours = self._cfg("schedule_offset_hours", 24)
-        schedule_time = datetime.utcnow() + timedelta(hours=offset_hours)
+        schedule_time = datetime.now(timezone.utc) + timedelta(hours=offset_hours)
         description = await self._generate_description(topic, script.body)
         tags = await self._generate_tags(topic)
 

@@ -101,7 +101,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
             raise ThumbnailError("httpx not installed")
 
         prompt = style.prompt_template.format(subject=title)
-        provider = getattr(self.settings, "image_provider", "replicate")
+        provider = getattr(self.settings.visual, "default_provider", "replicate")
 
         if provider == "openai":
             return await self._generate_dalle(prompt)
@@ -111,7 +111,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
         if httpx is None:
             raise ThumbnailError("httpx not installed")
 
-        api_key = getattr(self.settings, "replicate_api_key", "")
+        api_key = self.settings.visual.replicate_api_token.get_secret_value()
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 "https://api.replicate.com/v1/predictions",
@@ -156,7 +156,7 @@ class ThumbnailGenerator(IThumbnailGenerator):
         if httpx is None:
             raise ThumbnailError("httpx not installed")
 
-        api_key = getattr(self.settings, "openai_api_key", "")
+        api_key = self.settings.llm.openai_api_key.get_secret_value()
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 "https://api.openai.com/v1/images/generations",

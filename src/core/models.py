@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -42,7 +42,7 @@ class Script:
     keywords: list[str] = field(default_factory=list)
     emotion_markers: dict[str, list[tuple[int, int]]] = field(default_factory=dict)
     estimated_duration: int = 0
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     @property
     def full_text(self) -> str:
@@ -96,8 +96,8 @@ class VideoProject:
     youtube_id: str | None = None
     scheduled_at: datetime | None = None
 
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     error_message: str | None = None
 
     @classmethod
@@ -111,12 +111,12 @@ class VideoProject:
     def mark_failed(self, error: str) -> None:
         self.status = ContentStatus.FAILED
         self.error_message = error
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(timezone.utc)
 
     def mark_completed(self, output_path: Path) -> None:
         self.status = ContentStatus.COMPLETED
         self.output_path = output_path
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(timezone.utc)
 
 
 @dataclass
