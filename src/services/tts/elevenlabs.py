@@ -111,7 +111,9 @@ class ElevenLabsClient:
             from mutagen.mp3 import MP3
 
             audio = MP3(path)
-            return audio.info.length
+            if audio.info is None:
+                return 0.0
+            return audio.info.length  # type: ignore[return-value]
         except Exception:
             return 0.0
 
