@@ -41,16 +41,24 @@ ChannelConfig(name, schedule, duration_range, voice_id, ...)
 ## EXCEPTIONS (exceptions.py)
 
 ```
-YTAutoError (base)
-├── ConfigError
-├── APIError
-│   ├── LLMError
-│   ├── TTSError
-│   ├── ImageGenerationError
-│   └── YouTubeAPIError
-├── PipelineError
-├── ValidationError
-└── UploadError
+YTAutoError (aliased as YouTubeAutomationError)
+├── LLMError
+│   ├── LLMRateLimitError
+│   └── LLMContentFilterError
+├── TTSError
+│   └── TTSQuotaExceededError
+├── ImageGenerationError
+├── VideoGenerationError
+├── VideoCompositionError
+│   └── FFmpegError
+├── MusicGenerationError
+├── YouTubeAPIError
+│   ├── YouTubeQuotaExceededError
+│   ├── YouTubeAuthError
+│   └── YouTubeUploadError
+├── ThumbnailError
+├── ScriptValidationError          # has .issues: list[str]
+└── PipelineError                  # has .stage, .original_error
 ```
 
 ## ORCHESTRATOR (orchestrator.py)
@@ -69,9 +77,3 @@ await orchestrator.enqueue("horror")  # Queue a job
 await orchestrator.run_once("facts")  # Immediate execution
 orchestrator.status()  # {"state": "running", "queue_size": 0, ...}
 ```
-
-## PATTERNS
-
-- **Lazy Loading**: Pipelines loaded on first use (`_lazy_load_pipeline`)
-- **Singleton**: `get_orchestrator()` returns global instance
-- **Job States**: PENDING → RUNNING → COMPLETED|FAILED|RETRYING

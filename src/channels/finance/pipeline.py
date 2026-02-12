@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable
 from datetime import UTC, datetime, timedelta
 from logging import getLogger
 from pathlib import Path
@@ -25,6 +25,7 @@ from src.core.exceptions import PipelineError
 from src.core.interfaces import ContentPipeline
 from src.core.models import (
     CHANNEL_CONFIGS,
+    ChannelConfig,
     ChannelType,
     Script,
     VideoProject,
@@ -73,7 +74,7 @@ class FinancePipeline(ContentPipeline):
         self.video_composer = video_composer
         self.thumbnail_generator = thumbnail_generator
         self.youtube_uploader = youtube_uploader
-        self.config = CHANNEL_CONFIGS.get(ChannelType.FINANCE, {})
+        self.config: ChannelConfig = CHANNEL_CONFIGS[ChannelType.FINANCE]
         self.output_base = output_base or Path("data/output")
         self._llm_client = llm_client
 
@@ -392,10 +393,21 @@ class FinancePipeline(ContentPipeline):
         if self._llm_client is not None:
             return await self._llm_client.generate(prompt)
         gen = self.script_generator
-        if hasattr(gen, "_llm_generate"):
-            return await gen._llm_generate(prompt)  # type: ignore[attr-defined]
-        if hasattr(gen, "client") and hasattr(gen.client, "generate"):  # type: ignore[attr-defined]
-            return await gen.client.generate(prompt)  # type: ignore[attr-defined]
+        llm_generate = getattr(gen, "_llm_generate", None)
+        if callable(llm_generate):
+            maybe_result = llm_generate(prompt)
+            if isinstance(maybe_result, Awaitable):
+                result = await maybe_result
+                if isinstance(result, str):
+                    return result
+        client = getattr(gen, "client", None)
+        client_generate = getattr(client, "generate", None)
+        if callable(client_generate):
+            maybe_result = client_generate(prompt)
+            if isinstance(maybe_result, Awaitable):
+                result = await maybe_result
+                if isinstance(result, str):
+                    return result
         raise PipelineError("No LLM client available for raw text generation")
 
     def _cfg(self, key: str, default: Any) -> Any:

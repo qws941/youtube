@@ -32,16 +32,17 @@ class VideoComposer:
         settings = get_settings()
         self.output_dir = Path(settings.paths.output_dir)
         self.temp_dir = Path(getattr(settings, "temp_dir", "/tmp"))
-        self._ffmpeg = shutil.which("ffmpeg")
-        self._ffprobe = shutil.which("ffprobe")
+        ffmpeg_path = shutil.which("ffmpeg")
+        ffprobe_path = shutil.which("ffprobe")
+        if ffmpeg_path is None:
+            raise VideoCompositionError("ffmpeg not found in PATH")
+        if ffprobe_path is None:
+            raise VideoCompositionError("ffprobe not found in PATH")
+        self._ffmpeg: str = ffmpeg_path
+        self._ffprobe: str = ffprobe_path
         self.subtitle_generator = SubtitleGenerator()
         self.music_mixer = MusicMixer()
         self._executor = ThreadPoolExecutor(max_workers=4)
-
-        if not self._ffmpeg:
-            raise VideoCompositionError("ffmpeg not found in PATH")
-        if not self._ffprobe:
-            raise VideoCompositionError("ffprobe not found in PATH")
 
     async def compose(self, project: Any, output_path: Path) -> Path:
         loop = asyncio.get_event_loop()
@@ -57,7 +58,7 @@ class VideoComposer:
         video_path: Path,
         script: Any,
         output_path: Path,
-        style: dict | None = None,
+        style: dict[str, Any] | None = None,
     ) -> Path:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -90,6 +91,7 @@ class VideoComposer:
                     video_duration,
                     temp_path / "bg_music.aac",
                 )
+                final_audio: Path | None
                 if bg_music and main_audio:
                     final_audio = self.music_mixer.mix_with_main_audio(
                         main_audio,
@@ -118,7 +120,7 @@ class VideoComposer:
         video_path: Path,
         script: Any,
         output_path: Path,
-        style: dict | None = None,
+        style: dict[str, Any] | None = None,
     ) -> Path:
         with tempfile.TemporaryDirectory(dir=self.temp_dir) as temp:
             temp_path = Path(temp)
@@ -158,7 +160,7 @@ class VideoComposer:
         video_path: Path,
         srt_path: Path,
         output_path: Path,
-        style: dict | None = None,
+        style: dict[str, Any] | None = None,
     ) -> Path:
         filter_str = SubtitleStyle.get_ffmpeg_args(srt_path, style)
         output_path.parent.mkdir(parents=True, exist_ok=True)

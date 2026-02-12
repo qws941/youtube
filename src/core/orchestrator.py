@@ -11,14 +11,14 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol
 
 import schedule
 
 try:
     import structlog
 
-    logger = structlog.get_logger(__name__)
+    logger: Any = structlog.get_logger(__name__)
 except ImportError:
     import logging
 
@@ -54,6 +54,10 @@ class OrchestratorState(Enum):
     STOPPING = "stopping"
 
 
+class RunnablePipeline(Protocol):
+    async def run(self, channel: ChannelType) -> Any: ...
+
+
 class Orchestrator:
     DEFAULT_SCHEDULES = {
         "horror": "09:00",
@@ -80,15 +84,15 @@ class Orchestrator:
         self._stats: dict[str, dict[str, int]] = defaultdict(
             lambda: {"completed": 0, "failed": 0, "total": 0}
         )
-        self._workers: list[asyncio.Task] = []
-        self._scheduler_task: asyncio.Task | None = None
-        self._pipelines: dict[str, Any] = {}
+        self._workers: list[asyncio.Task[Any]] = []
+        self._scheduler_task: asyncio.Task[Any] | None = None
+        self._pipelines: dict[str, RunnablePipeline] = {}
 
-    def register_pipeline(self, channel: str, pipeline: Any):
+    def register_pipeline(self, channel: str, pipeline: RunnablePipeline):
         self._pipelines[channel] = pipeline
         logger.info("pipeline_registered", channel=channel)
 
-    def _get_pipeline(self, channel: str) -> Any:
+    def _get_pipeline(self, channel: str) -> RunnablePipeline | None:
         if channel not in self._pipelines:
             self._lazy_load_pipeline(channel)
         return self._pipelines.get(channel)
@@ -96,17 +100,17 @@ class Orchestrator:
     def _lazy_load_pipeline(self, channel: str):
         try:
             if channel == "horror":
-                from src.channels.horror import create_pipeline
+                from src.channels import horror as horror_channel
 
-                self._pipelines[channel] = create_pipeline()
+                self._pipelines[channel] = horror_channel.create_pipeline()
             elif channel == "facts":
-                from src.channels.facts import create_pipeline
+                from src.channels import facts as facts_channel
 
-                self._pipelines[channel] = create_pipeline()
+                self._pipelines[channel] = facts_channel.create_pipeline()
             elif channel == "finance":
-                from src.channels.finance import create_pipeline
+                from src.channels import finance as finance_channel
 
-                self._pipelines[channel] = create_pipeline()
+                self._pipelines[channel] = finance_channel.create_pipeline()
         except ImportError as e:
             logger.warning("pipeline_import_failed", channel=channel, error=str(e))
 

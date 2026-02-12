@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import structlog
 from google.auth.transport.requests import Request  # type: ignore[import-untyped]
 from google.oauth2.credentials import Credentials  # type: ignore[import-untyped]
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
@@ -10,6 +11,8 @@ from googleapiclient.discovery import build  # type: ignore[import-untyped]
 
 from config import get_settings
 from src.core.exceptions import YouTubeAuthError
+
+logger = structlog.get_logger(__name__)
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
@@ -43,7 +46,11 @@ class YouTubeAuth:
                     self._refresh_token()
                     return self._credentials  # type: ignore
                 except Exception:
-                    pass
+                    logger.warning(
+                        "token_refresh_failed",
+                        token_path=str(self._token_path),
+                        exc_info=True,
+                    )
 
         self._credentials = self._run_oauth_flow(headless=headless)
         return self._credentials
@@ -69,7 +76,11 @@ class YouTubeAuth:
             try:
                 return self._load_token()
             except Exception:
-                pass
+                logger.warning(
+                    "token_load_failed",
+                    token_path=str(self._token_path),
+                    exc_info=True,
+                )
         return self._run_oauth_flow()
 
     def _load_token(self) -> Credentials:
@@ -131,6 +142,9 @@ class YouTubeAuth:
                     print("\n브라우저를 열 수 없습니다. --headless 옵션을 사용하세요.\n")
                     raise
 
+            if not isinstance(creds, Credentials):
+                raise YouTubeAuthError("OAuth flow returned incompatible credentials type")
+
             self._save_token(creds)
             return creds
         except Exception as e:
@@ -151,7 +165,7 @@ class YouTubeAuth:
 
     def revoke(self) -> bool:
         if self._credentials and self._credentials.token:
-            import requests
+            import requests  # type: ignore[import-untyped]
 
             response = requests.post(
                 "https://oauth2.googleapis.com/revoke",

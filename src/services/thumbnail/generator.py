@@ -180,16 +180,16 @@ class ThumbnailGenerator(IThumbnailGenerator):
 
     def _apply_image_effects(self, img: Image.Image, style: ThumbnailStyle) -> Image.Image:
         if style.brightness != 1.0:
-            enhancer = ImageEnhance.Brightness(img)
-            img = enhancer.enhance(style.brightness)
+            brightness_enhancer = ImageEnhance.Brightness(img)
+            img = brightness_enhancer.enhance(style.brightness)
 
         if style.contrast_boost != 1.0:
-            enhancer = ImageEnhance.Contrast(img)
-            img = enhancer.enhance(style.contrast_boost)
+            contrast_enhancer = ImageEnhance.Contrast(img)
+            img = contrast_enhancer.enhance(style.contrast_boost)
 
         if style.saturation_boost != 1.0:
-            enhancer = ImageEnhance.Color(img)
-            img = enhancer.enhance(style.saturation_boost)
+            color_enhancer = ImageEnhance.Color(img)
+            img = color_enhancer.enhance(style.saturation_boost)
 
         if style.overlay_color and style.overlay_opacity > 0:
             overlay = Image.new("RGB", img.size, style.overlay_color)

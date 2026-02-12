@@ -5,8 +5,93 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import structlog
+
 from config import get_settings
-from src.core.exceptions import FFmpegError
+from src.core.exceptions import FFmpegError, MusicGenerationError
+from src.core.interfaces import MusicGenerator
+
+logger = structlog.get_logger(__name__)
+
+
+class LocalMusicProvider(MusicGenerator):
+    """MusicGenerator implementation that selects from local music library.
+
+    Uses the local assets/music directory to find music matching the prompt.
+    Falls back to random selection if no keyword match is found.
+    """
+
+    KEYWORD_CATEGORY_MAP = {
+        "dark": "dark_ambient",
+        "horror": "horror",
+        "scary": "horror",
+        "tension": "tension",
+        "suspense": "tension",
+        "upbeat": "upbeat",
+        "happy": "upbeat",
+        "inspiring": "inspiring",
+        "corporate": "corporate",
+        "professional": "professional",
+        "news": "news",
+        "ambient": "dark_ambient",
+    }
+
+    def __init__(self, music_dir: Path | None = None):
+        settings = get_settings()
+        self.music_dir = music_dir or Path(settings.paths.assets_dir) / "music"
+
+    async def generate(
+        self,
+        prompt: str,
+        duration: int,
+        output_path: Path,
+    ) -> Path:
+        if not self.music_dir.exists():
+            raise MusicGenerationError(
+                f"Music directory not found: {self.music_dir}. "
+                "Create it and add .mp3/.wav files in category subdirectories."
+            )
+
+        # Match prompt keywords to categories
+        prompt_lower = prompt.lower()
+        matched_categories = [
+            cat for keyword, cat in self.KEYWORD_CATEGORY_MAP.items() if keyword in prompt_lower
+        ]
+
+        # Search for music in matched categories
+        music_file = None
+        for category in matched_categories:
+            category_dir = self.music_dir / category
+            if category_dir.exists():
+                files = list(category_dir.glob("*.mp3")) + list(category_dir.glob("*.wav"))
+                if files:
+                    music_file = random.choice(files)
+                    break
+
+        # Fallback to any available music
+        if not music_file:
+            all_music = list(self.music_dir.rglob("*.mp3")) + list(self.music_dir.rglob("*.wav"))
+            if not all_music:
+                raise MusicGenerationError(f"No music files found in {self.music_dir}")
+            music_file = random.choice(all_music)
+            logger.warning(
+                "no_keyword_match",
+                prompt=prompt,
+                fallback_file=str(music_file),
+            )
+
+        # Copy/trim to output path
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        mixer = MusicMixer(music_dir=self.music_dir)
+        mixer.loop_to_duration(music_file, float(duration), output_path)
+
+        logger.info(
+            "music_generated",
+            source=str(music_file),
+            duration=duration,
+            output=str(output_path),
+        )
+        return output_path
 
 
 class MusicMixer:
@@ -21,9 +106,17 @@ class MusicMixer:
 
     def __init__(self, music_dir: Path | None = None):
         settings = get_settings()
-        self.music_dir = music_dir or Path(settings.assets_dir) / "music"
+        self.music_dir = music_dir or Path(settings.paths.assets_dir) / "music"
         self._ffmpeg = shutil.which("ffmpeg")
         self._ffprobe = shutil.which("ffprobe")
+
+        if not self.music_dir.exists():
+            logger.warning(
+                "music_dir_missing",
+                path=str(self.music_dir),
+                hint="Background music will be unavailable. "
+                "Create the directory and add .mp3/.wav files.",
+            )
 
     def select_music(
         self,

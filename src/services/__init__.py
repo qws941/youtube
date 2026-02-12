@@ -31,6 +31,7 @@ from src.services.tts import (
 
 # Video
 from src.services.video import (
+    LocalMusicProvider,
     MusicMixer,
     SubtitleEntry,
     SubtitleGenerator,
@@ -77,6 +78,7 @@ __all__ = [
     "SubtitleStyle",
     "SubtitleEntry",
     "MusicMixer",
+    "LocalMusicProvider",
     # Thumbnail
     "ThumbnailGenerator",
     "ThumbnailStyle",

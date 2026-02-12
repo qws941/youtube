@@ -5,7 +5,10 @@ from pathlib import Path
 from typing import Any
 
 from anthropic import AsyncAnthropic
+from anthropic.types import MessageParam
+from anthropic.types.text_block import TextBlock
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -74,7 +77,7 @@ def _retry_decorator():
 
 
 class AnthropicClient(LLMClient):
-    def __init__(self, api_key: str | None = None, model: str = "claude-sonnet-4-20250514"):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         settings = get_settings()
         resolved_key = api_key
         if not resolved_key and settings.llm.use_opencode_auth:
@@ -82,22 +85,24 @@ class AnthropicClient(LLMClient):
         if not resolved_key:
             resolved_key = settings.llm.anthropic_api_key.get_secret_value()
         self._client = AsyncAnthropic(api_key=resolved_key)
-        self._model = model
+        self._model = model or settings.llm.anthropic_model
         self._max_tokens = 4096
 
     @_retry_decorator()
     async def generate(self, prompt: str, system: str | None = None, **kwargs) -> str:
         try:
-            messages: list[dict[str, str]] = [{"role": "user", "content": prompt}]
+            messages: list[MessageParam] = [{"role": "user", "content": prompt}]
             response = await self._client.messages.create(
                 model=self._model,
                 max_tokens=kwargs.get("max_tokens", self._max_tokens),
                 system=system or "",
-                messages=messages,  # type: ignore[arg-type]
+                messages=messages,
                 temperature=kwargs.get("temperature", 0.7),
             )
             content_block = response.content[0]
-            return content_block.text if hasattr(content_block, "text") else str(content_block)  # type: ignore[union-attr]
+            if isinstance(content_block, TextBlock):
+                return content_block.text
+            return str(content_block)
         except Exception as e:
             error_str = str(e).lower()
             if "rate" in error_str or "429" in error_str:
@@ -137,7 +142,7 @@ class OpenAIClient(LLMClient):
     @_retry_decorator()
     async def generate(self, prompt: str, system: str | None = None, **kwargs) -> str:
         try:
-            messages = []
+            messages: list[ChatCompletionMessageParam] = []
             if system:
                 messages.append({"role": "system", "content": system})
             messages.append({"role": "user", "content": prompt})

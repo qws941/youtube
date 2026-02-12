@@ -1,11 +1,12 @@
 import re
+from typing import TypedDict
 
 from src.core.exceptions import LLMError
 from src.core.interfaces import ScriptGenerator as ScriptGeneratorABC
 from src.core.models import ChannelType, Script
 from src.services.llm.client import LLMClient, get_llm_client
 
-CHANNEL_PROMPTS = {
+CHANNEL_PROMPTS: dict[ChannelType, "ChannelPromptConfig"] = {
     ChannelType.HORROR: {
         "topic_system": """You are a viral horror/mystery content strategist.
 Generate unique, clickable topic ideas that evoke fear, curiosity, and the unknown.
@@ -58,6 +59,14 @@ Create FOMO around missed opportunities and promise of transformation.""",
         "emotion_markers": ["urgency", "opportunity", "warning", "revelation", "motivation"],
     },
 }
+
+
+class ChannelPromptConfig(TypedDict):
+    topic_system: str
+    topic_prompt: str
+    script_system: str
+    emotion_markers: list[str]
+
 
 SCRIPT_PROMPT_TEMPLATE = """Write a YouTube script for the following topic:
 Topic: {topic}

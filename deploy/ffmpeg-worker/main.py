@@ -293,7 +293,13 @@ async def process_video(job_id: str, request: ComposeRequest) -> None:
         jobs[job_id].error = str(e)
 
     finally:
-        pass
+        # Cleanup job directory to reclaim disk space
+        if job_dir.exists():
+            try:
+                shutil.rmtree(job_dir, ignore_errors=True)
+                logger.info(f"[{job_id}] Cleaned up job directory")
+            except Exception as cleanup_err:
+                logger.warning(f"[{job_id}] Cleanup failed: {cleanup_err}")
 
 
 # ============================================================================

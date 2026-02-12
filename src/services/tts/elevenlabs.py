@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import httpx
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -23,7 +24,7 @@ class ElevenLabsClient:
         use_speaker_boost: bool = True,
     ):
         settings = get_settings()
-        self._api_key = api_key or settings.elevenlabs_api_key
+        self._api_key = api_key or settings.tts.api_key.get_secret_value()
         self._stability = stability
         self._similarity_boost = similarity_boost
         self._style = style
@@ -114,7 +115,7 @@ class ElevenLabsClient:
         except Exception:
             return 0.0
 
-    def get_voices(self) -> list[dict]:
+    def get_voices(self) -> list[dict[str, Any]]:
         try:
             response = self._client.get("/voices")
             response.raise_for_status()
@@ -122,7 +123,7 @@ class ElevenLabsClient:
         except httpx.HTTPError as e:
             raise TTSError(f"Failed to fetch voices: {e}") from e
 
-    def get_user_subscription(self) -> dict:
+    def get_user_subscription(self) -> dict[str, Any]:
         try:
             response = self._client.get("/user/subscription")
             response.raise_for_status()

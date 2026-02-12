@@ -1,5 +1,5 @@
 from src.services.video.composer import VideoComposer
-from src.services.video.music import MusicMixer
+from src.services.video.music import LocalMusicProvider, MusicMixer
 from src.services.video.subtitles import SubtitleEntry, SubtitleGenerator, SubtitleStyle
 
 __all__ = [
@@ -8,4 +8,5 @@ __all__ = [
     "SubtitleStyle",
     "SubtitleEntry",
     "MusicMixer",
+    "LocalMusicProvider",
 ]

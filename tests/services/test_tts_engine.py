@@ -91,7 +91,7 @@ class TestTTSSynthesize:
         )
         mock_engine._elevenlabs.synthesize.return_value = expected_segment
 
-        result = mock_engine.synthesize(
+        result = mock_engine._synthesize_sync(
             text="Hello world",
             output_path=output_path,
             channel_type=ChannelType.HORROR,
@@ -114,7 +114,7 @@ class TestTTSSynthesize:
         mock_engine._elevenlabs.synthesize.side_effect = TTSQuotaExceededError("Quota exceeded")
         mock_engine._edge.synthesize.return_value = expected_segment
 
-        result = mock_engine.synthesize(
+        result = mock_engine._synthesize_sync(
             text="Hello world",
             output_path=output_path,
             channel_type=ChannelType.HORROR,
@@ -137,7 +137,7 @@ class TestTTSSynthesize:
         mock_engine._elevenlabs.synthesize.side_effect = TTSError("API error")
         mock_engine._edge.synthesize.return_value = expected_segment
 
-        result = mock_engine.synthesize(
+        result = mock_engine._synthesize_sync(
             text="Hello world",
             output_path=output_path,
             channel_type=ChannelType.HORROR,
@@ -162,7 +162,7 @@ class TestTTSSynthesize:
                     )
 
                     with pytest.raises(TTSQuotaExceededError):
-                        engine.synthesize(
+                        engine._synthesize_sync(
                             text="Hello world",
                             output_path=tmp_path / "test.mp3",
                         )
@@ -180,7 +180,7 @@ class TestTTSSynthesize:
                 engine._edge = None
 
                 with pytest.raises(TTSError, match="No TTS provider available"):
-                    engine.synthesize(
+                    engine._synthesize_sync(
                         text="Hello world",
                         output_path=tmp_path / "test.mp3",
                     )

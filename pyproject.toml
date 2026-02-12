@@ -33,6 +33,10 @@ dependencies = [
     "moviepy>=1.0.3",
     "Pillow>=10.2.0",
     
+    # Audio Processing (used by TTS engines)
+    "pydub>=0.25.1",
+    "mutagen>=1.47.0",
+    
     # YouTube API
     "google-api-python-client>=2.118.0",
     "google-auth-oauthlib>=1.2.0",

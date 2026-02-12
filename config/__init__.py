@@ -1,5 +1,4 @@
 from config.settings import (
-    ChannelType,
     FeatureFlags,
     LLMProvider,
     LLMSettings,
@@ -16,7 +15,6 @@ from config.settings import (
 )
 
 __all__ = [
-    "ChannelType",
     "FeatureFlags",
     "LLMProvider",
     "LLMSettings",
