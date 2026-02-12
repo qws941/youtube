@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from enum import Enum
+from enum import StrEnum
 
 import structlog
 import typer
@@ -42,7 +42,7 @@ app.add_typer(youtube_app, name="youtube")
 console = Console()
 
 
-class ChannelChoice(str, Enum):
+class ChannelChoice(StrEnum):
     horror = "horror"
     facts = "facts"
     finance = "finance"

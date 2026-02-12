@@ -9,7 +9,7 @@ import sys
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -40,7 +40,7 @@ class JobRecord:
     job_id: str
     channel: str
     status: JobStatus
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None
     error: str | None = None
@@ -122,7 +122,7 @@ class Orchestrator:
     async def _process_job(self, job: JobRecord):
         async with self._semaphore:
             job.status = JobStatus.RUNNING
-            job.started_at = datetime.now(timezone.utc)
+            job.started_at = datetime.now(UTC)
             logger.info("job_started", job_id=job.job_id, channel=job.channel)
 
             try:
@@ -132,7 +132,7 @@ class Orchestrator:
                     await self._execute_job(job)
 
                 job.status = JobStatus.COMPLETED
-                job.completed_at = datetime.now(timezone.utc)
+                job.completed_at = datetime.now(UTC)
                 self._stats[job.channel]["completed"] += 1
                 logger.info(
                     "job_completed",
@@ -165,7 +165,7 @@ class Orchestrator:
             await self._queue.put(job)
         else:
             job.status = JobStatus.FAILED
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             self._stats[job.channel]["failed"] += 1
 
     async def _worker(self, worker_id: int):

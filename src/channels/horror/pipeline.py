@@ -6,7 +6,7 @@ import json
 import re
 import uuid
 from collections.abc import AsyncIterator
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from logging import getLogger
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
@@ -332,7 +332,7 @@ class HorrorPipeline(ContentPipeline):
         topic: dict[str, Any],
     ) -> None:
         offset_hours = self._cfg("schedule_offset_hours", 24)
-        schedule_time = datetime.now(timezone.utc) + timedelta(hours=offset_hours)
+        schedule_time = datetime.now(UTC) + timedelta(hours=offset_hours)
         description = await self._generate_description(topic, script.body)
         tags = await self._generate_tags(topic)
 

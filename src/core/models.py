@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
 
-class ChannelType(str, Enum):
+class ChannelType(StrEnum):
     HORROR = "horror"
     FACTS = "facts"
     FINANCE = "finance"
 
 
-class ContentStatus(str, Enum):
+class ContentStatus(StrEnum):
     PENDING = "pending"
     GENERATING = "generating"
     COMPLETED = "completed"
@@ -22,7 +22,7 @@ class ContentStatus(str, Enum):
     UPLOADED = "uploaded"
 
 
-class VideoStyle(str, Enum):
+class VideoStyle(StrEnum):
     CINEMATIC = "cinematic"
     DOCUMENTARY = "documentary"
     STORYTELLING = "storytelling"
@@ -42,7 +42,7 @@ class Script:
     keywords: list[str] = field(default_factory=list)
     emotion_markers: dict[str, list[tuple[int, int]]] = field(default_factory=dict)
     estimated_duration: int = 0
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def full_text(self) -> str:
@@ -96,8 +96,8 @@ class VideoProject:
     youtube_id: str | None = None
     scheduled_at: datetime | None = None
 
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     error_message: str | None = None
 
     @classmethod
@@ -111,12 +111,12 @@ class VideoProject:
     def mark_failed(self, error: str) -> None:
         self.status = ContentStatus.FAILED
         self.error_message = error
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def mark_completed(self, output_path: Path) -> None:
         self.status = ContentStatus.COMPLETED
         self.output_path = output_path
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
 
 @dataclass
